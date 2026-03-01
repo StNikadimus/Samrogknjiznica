@@ -111,10 +111,148 @@
     }
     .btn-return:hover { background: #f5d0cc; }
 
-    main {
-      max-width: 900px;
+    .page-layout {
+      max-width: 1100px;
       margin: 2rem auto;
       padding: 0 1.5rem;
+      display: flex;
+      gap: 1.8rem;
+      align-items: flex-start;
+    }
+
+    /* ── Filter sidebar ───────────────────────────────────── */
+    .filter-sidebar {
+      width: 210px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 76px;
+    }
+
+    .filter-section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.1rem;
+      margin-bottom: 1rem;
+      box-shadow: var(--shadow);
+    }
+
+    .filter-section h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem;
+      color: var(--text);
+      margin-bottom: 0.7rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .filter-chip-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .filter-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0.7rem;
+      border-radius: 8px;
+      border: 1.5px solid transparent;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      background: transparent;
+      transition: all 0.15s;
+      text-align: left;
+      width: 100%;
+    }
+
+    .filter-chip:hover {
+      background: var(--accent-light);
+      border-color: var(--accent-light);
+      color: var(--accent);
+    }
+
+    .filter-chip.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+
+    .filter-chip .chip-count {
+      margin-left: auto;
+      font-size: 0.75rem;
+      opacity: 0.7;
+      background: rgba(0,0,0,0.08);
+      padding: 0.05rem 0.4rem;
+      border-radius: 10px;
+    }
+
+    .filter-chip.active .chip-count {
+      background: rgba(255,255,255,0.25);
+      opacity: 1;
+    }
+
+    .filter-status-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0.7rem;
+      border-radius: 8px;
+      border: 1.5px solid transparent;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 500;
+      background: transparent;
+      transition: all 0.15s;
+      width: 100%;
+      color: var(--text);
+    }
+    .filter-status-chip:hover { background: var(--accent-light); }
+    .filter-status-chip.active-available {
+      background: var(--accent-light);
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .filter-status-chip.active-borrowed {
+      background: #fdecea;
+      border-color: var(--red);
+      color: var(--red);
+      font-weight: 600;
+    }
+
+    .btn-clear-filters {
+      width: 100%;
+      padding: 0.5rem;
+      background: transparent;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-top: 0.3rem;
+    }
+    .btn-clear-filters:hover {
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    @media (max-width: 640px) {
+      .page-layout { flex-direction: column; }
+      .filter-sidebar { width: 100%; position: static; }
     }
 
     #resultsTitle {
@@ -373,6 +511,33 @@
       border-color: #c0392b;
       color: white;
     }
+    .btn-edit-book {
+      margin-top: 0.8rem;
+      display: inline-block;
+      background: transparent;
+      border: 1px solid #5b8dee55;
+      color: #5b8dee;
+      border-radius: 6px;
+      padding: 0.3rem 0.8rem;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-right: 0.4rem;
+    }
+    .btn-edit-book:hover {
+      background: #5b8dee;
+      border-color: #5b8dee;
+      color: white;
+    }
+    .admin-card-actions {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+      margin-top: 0.5rem;
+    }
     .admin-profile-card {
       display: flex;
       align-items: center;
@@ -423,11 +588,33 @@
     <button class="btn btn-secondary" id="btnAll">📚 Prikaži vse</button>
   </div>
 
-  <main>
-    <div id="resultsTitle"></div>
-    <div id="statusMsg">Nalagam knjige...</div>
-    <div id="bookList" class="book-grid"></div>
-  </main>
+  <div class="page-layout">
+    <!-- Filter sidebar -->
+    <aside class="filter-sidebar">
+      <div class="filter-section">
+        <h3>📚 Razred</h3>
+        <div class="filter-chip-list" id="razredFilters">
+          <div style="color:var(--muted);font-size:0.82rem;padding:0.3rem 0;">Nalagam...</div>
+        </div>
+      </div>
+      <div class="filter-section">
+        <h3>📋 Status</h3>
+        <div class="filter-chip-list">
+          <button class="filter-status-chip" id="filterAll">📚 Vse knjige</button>
+          <button class="filter-status-chip" id="filterAvailable">🟢 Na voljo</button>
+          <button class="filter-status-chip" id="filterBorrowed">🔴 Izposojene</button>
+        </div>
+      </div>
+      <button class="btn-clear-filters" id="btnClearFilters">✕ Počisti filtre</button>
+    </aside>
+
+    <!-- Book list -->
+    <main>
+      <div id="resultsTitle"></div>
+      <div id="statusMsg">Nalagam knjige...</div>
+      <div id="bookList" class="book-grid"></div>
+    </main>
+  </div>
 
   <div class="fab-group">
     <button class="fab" id="fabAdmin" title="Admin panel (#)">#</button>
@@ -443,6 +630,7 @@
       <p id="adminWelcome">Pozdravljen, admin!</p>
     </div>
     <div style="display:flex;gap:0.7rem;align-items:center;flex-wrap:wrap;">
+      <button id="btnStats" style="background:#2a2f40;color:#f59e0b;border:1px solid #4a3a1a;padding:0.5rem 1rem;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;transition:all 0.15s;">📊 Statistike</button>
       <button id="btnImportCSV" style="background:#2a2f40;color:#5b8dee;border:1px solid #333a4d;padding:0.5rem 1rem;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;transition:all 0.15s;">📂 Uvozi CSV</button>
       <button id="btnManageAdmins" style="background:#2a2f40;color:#a78bfa;border:1px solid #3d3560;padding:0.5rem 1rem;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;transition:all 0.15s;">👥 Admini</button>
       <button id="btnExitAdmin">← Nazaj na knjižnico</button>
@@ -613,6 +801,23 @@
   </div>
 </div>
 
+<!-- Edit book modal -->
+<div id="editBookOverlay" class="modal-overlay" style="display:none">
+  <div class="modal-box" style="max-width:440px;">
+    <h2 class="modal-title" style="color:#5b8dee;">✏️ Uredi knjigo</h2>
+    <p class="modal-sub" id="editBookSubtitle"></p>
+    <input type="text" id="editNaslov"  class="modal-input" placeholder="Naslov *">
+    <input type="text" id="editAvtor"   class="modal-input" placeholder="Avtor *">
+    <input type="text" id="editLetnica" class="modal-input" placeholder="Letnica">
+    <input type="text" id="editRazred"  class="modal-input" placeholder="Razred">
+    <div id="editBookError" class="modal-error" style="display:none"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="editBookCancel">Prekliči</button>
+      <button class="btn btn-primary" id="editBookConfirm" style="background:#5b8dee;">💾 Shrani spremembe</button>
+    </div>
+  </div>
+</div>
+
 <!-- Delete confirm modal -->
 <div id="deleteOverlay" class="modal-overlay" style="display:none">
   <div class="modal-box">
@@ -651,6 +856,51 @@
     <div class="modal-actions">
       <button class="btn btn-secondary" id="addAdminCancel">← Nazaj</button>
       <button class="btn btn-primary"   id="addAdminConfirm" style="background:#7c3aed;">✅ Dodaj admina</button>
+    </div>
+  </div>
+</div>
+
+<!-- Stats modal -->
+<div id="statsOverlay" class="modal-overlay" style="display:none">
+  <div class="modal-box" style="max-width:660px;max-height:90vh;overflow-y:auto;">
+    <h2 class="modal-title">📊 Statistike izposoj</h2>
+    <p class="modal-sub" id="statsSubtitle">Trend izposoj po mesecih</p>
+
+    <div id="statsLoading" style="text-align:center;padding:2rem;color:var(--muted);">Nalagam podatke...</div>
+
+    <div id="statsContent" style="display:none;">
+      <!-- Summary cards -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.8rem;margin:1rem 0;">
+        <div style="background:#f0ebe0;border-radius:10px;padding:0.8rem;text-align:center;">
+          <div style="font-size:1.6rem;font-weight:700;color:var(--accent);" id="statsTotalIzposoj">—</div>
+          <div style="font-size:0.78rem;color:var(--muted);">Skupaj izposoj</div>
+        </div>
+        <div style="background:#f0ebe0;border-radius:10px;padding:0.8rem;text-align:center;">
+          <div style="font-size:1.6rem;font-weight:700;color:var(--accent);" id="statsThisMonth">—</div>
+          <div style="font-size:0.78rem;color:var(--muted);">Ta mesec</div>
+        </div>
+        <div style="background:#f0ebe0;border-radius:10px;padding:0.8rem;text-align:center;">
+          <div style="font-size:1.6rem;font-weight:700;color:var(--accent);" id="statsTopBorrower">—</div>
+          <div style="font-size:0.78rem;color:var(--muted);">Največji bralec</div>
+        </div>
+      </div>
+
+      <!-- Bar chart -->
+      <div style="margin-top:1.2rem;">
+        <div style="font-weight:600;font-size:0.9rem;margin-bottom:0.8rem;color:var(--text);">Izposoje po mesecih</div>
+        <div id="barChart" style="display:flex;align-items:flex-end;gap:6px;height:160px;padding:0 4px;"></div>
+        <div id="barLabels" style="display:flex;gap:6px;margin-top:6px;padding:0 4px;"></div>
+      </div>
+
+      <!-- Top books -->
+      <div style="margin-top:1.4rem;">
+        <div style="font-weight:600;font-size:0.9rem;margin-bottom:0.6rem;color:var(--text);">🏆 Najbolj priljubljene knjige</div>
+        <div id="topBooksList" style="display:flex;flex-direction:column;gap:0.4rem;"></div>
+      </div>
+    </div>
+
+    <div class="modal-actions" style="margin-top:1.2rem;">
+      <button class="btn btn-secondary" id="statsClose">Zapri</button>
     </div>
   </div>
 </div>
@@ -705,13 +955,114 @@
   //  PUBLIC VIEW
   // ═══════════════════════════════════════════════════════
 
+  // ── Filter state ──────────────────────────────────────────────────────────
+  let activeRazred = null;   // null = vse, or a razred string
+  let activeStatus = "all";  // "all" | "available" | "borrowed"
+  let allBooksCache = [];    // full unfiltered list from Firebase
+
+  function applyFilters(books) {
+    let result = books;
+    if (activeRazred) {
+      result = result.filter(b => (b.Razred || "").toString() === activeRazred);
+    }
+    if (activeStatus === "available") {
+      result = result.filter(b => !b.izposojeno);
+    } else if (activeStatus === "borrowed") {
+      result = result.filter(b => b.izposojeno);
+    }
+    return result;
+  }
+
+  function buildRazredChips(books) {
+    const container = document.getElementById("razredFilters");
+    // Count books per razred
+    const counts = {};
+    books.forEach(b => {
+      const r = (b.Razred || "").toString().trim();
+      if (r) counts[r] = (counts[r] || 0) + 1;
+    });
+    const razredi = Object.keys(counts).sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
+
+    if (razredi.length === 0) {
+      container.innerHTML = '<div style="color:var(--muted);font-size:0.82rem;padding:0.3rem 0;">Ni razredov</div>';
+      return;
+    }
+
+    container.innerHTML = "";
+    razredi.forEach(r => {
+      const btn = document.createElement("button");
+      btn.className = "filter-chip" + (activeRazred === r ? " active" : "");
+      btn.dataset.razred = r;
+      btn.innerHTML = `<span>${r}</span><span class="chip-count">${counts[r]}</span>`;
+      container.appendChild(btn);
+    });
+  }
+
+  function updateFilterUI() {
+    // Razred chips
+    document.querySelectorAll(".filter-chip").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.razred === activeRazred);
+    });
+    // Status chips
+    document.getElementById("filterAll").className       = "filter-status-chip" + (activeStatus === "all"       ? " active-available" : "");
+    document.getElementById("filterAvailable").className = "filter-status-chip" + (activeStatus === "available" ? " active-available" : "");
+    document.getElementById("filterBorrowed").className  = "filter-status-chip" + (activeStatus === "borrowed"  ? " active-borrowed"  : "");
+  }
+
+  function renderAndFilter() {
+    const filtered = applyFilters(allBooksCache);
+    const q = document.getElementById("search").value.trim().toLowerCase();
+    const searched = q ? filtered.filter(b =>
+      (b.Naslov  && b.Naslov.toLowerCase().includes(q))  ||
+      (b.Avtor   && b.Avtor.toLowerCase().includes(q))   ||
+      (b.Razred  && b.Razred.toString().toLowerCase().includes(q)) ||
+      (b.Letnica && b.Letnica.toString().includes(q))
+    ) : filtered;
+
+    // Update results title
+    const title = document.getElementById("resultsTitle");
+    const parts = [];
+    if (q) parts.push(`"${q}"`);
+    if (activeRazred) parts.push(`Razred: ${activeRazred}`);
+    if (activeStatus !== "all") parts.push(activeStatus === "available" ? "Na voljo" : "Izposojene");
+    if (parts.length > 0) {
+      title.style.display = "block";
+      title.textContent = "Filtri: " + parts.join(" · ");
+    } else {
+      title.style.display = "none";
+    }
+
+    updateFilterUI();
+    renderBooks(searched);
+  }
+
+  // Filter sidebar click handlers
+  document.getElementById("razredFilters").addEventListener("click", e => {
+    const chip = e.target.closest(".filter-chip");
+    if (!chip) return;
+    const r = chip.dataset.razred;
+    activeRazred = (activeRazred === r) ? null : r; // toggle
+    renderAndFilter();
+  });
+
+  document.getElementById("filterAll").addEventListener("click",       () => { activeStatus = "all";       renderAndFilter(); });
+  document.getElementById("filterAvailable").addEventListener("click", () => { activeStatus = "available"; renderAndFilter(); });
+  document.getElementById("filterBorrowed").addEventListener("click",  () => { activeStatus = "borrowed";  renderAndFilter(); });
+
+  document.getElementById("btnClearFilters").addEventListener("click", () => {
+    activeRazred = null;
+    activeStatus = "all";
+    document.getElementById("search").value = "";
+    renderAndFilter();
+  });
+
   function renderBooks(books) {
     const list   = document.getElementById("bookList");
     const status = document.getElementById("statusMsg");
     list.innerHTML = "";
     if (books.length === 0) {
       status.style.display = "block";
-      status.textContent = "Ni rezultatov.";
+      status.textContent = "Ni rezultatov za izbrane filtre.";
       return;
     }
     status.style.display = "none";
@@ -744,8 +1095,6 @@
 
   async function loadBooks() {
     const status = document.getElementById("statusMsg");
-    const title  = document.getElementById("resultsTitle");
-    title.style.display = "none";
     status.style.display = "block";
     status.textContent = "Nalagam knjige...";
     document.getElementById("bookList").innerHTML = "";
@@ -754,7 +1103,9 @@
       let books = [];
       snapshot.forEach(d => books.push({ id: d.id, ...d.data() }));
       books.sort((a, b) => (a.Naslov || "").localeCompare(b.Naslov || ""));
-      renderBooks(books);
+      allBooksCache = books;
+      buildRazredChips(books);
+      renderAndFilter();
     } catch (err) {
       console.error("🔴 Firebase error:", err);
       let hint = "";
@@ -772,31 +1123,9 @@
   }
 
   async function searchBooks() {
-    const q = document.getElementById("search").value.trim().toLowerCase();
-    if (!q) { loadBooks(); return; }
-    const title  = document.getElementById("resultsTitle");
-    const status = document.getElementById("statusMsg");
-    title.style.display = "block";
-    title.textContent = `Rezultati za: "${q}"`;
-    status.style.display = "block";
-    status.textContent = "Iščem...";
-    document.getElementById("bookList").innerHTML = "";
-    try {
-      const snapshot = await getDocs(collection(db, "Knjige"));
-      let books = [];
-      snapshot.forEach(d => books.push({ id: d.id, ...d.data() }));
-      const filtered = books.filter(b =>
-        (b.Naslov  && b.Naslov.toLowerCase().includes(q))  ||
-        (b.Avtor   && b.Avtor.toLowerCase().includes(q))   ||
-        (b.Razred  && b.Razred.toString().toLowerCase().includes(q)) ||
-        (b.Letnica && b.Letnica.toString().includes(q))
-      );
-      filtered.sort((a, b) => (a.Naslov || "").localeCompare(b.Naslov || ""));
-      renderBooks(filtered);
-    } catch (err) {
-      console.error(err);
-      status.textContent = "❌ Napaka pri iskanju.";
-    }
+    // If cache is empty, load first
+    if (allBooksCache.length === 0) await loadBooks();
+    else renderAndFilter();
   }
 
   // ═══════════════════════════════════════════════════════
@@ -858,13 +1187,25 @@
     const btn = document.getElementById("borrowConfirm");
     btn.textContent = "Shranjujem..."; btn.disabled = true;
     try {
+      const bookData = allBooksCache.find(b => b.id === pendingBorrowId) || {};
       await updateDoc(doc(db, "Knjige", pendingBorrowId), {
         izposojeno: true,
         izposoja:   name
       });
+      // Log to history
+      await addDoc(collection(db, "Izposoje"), {
+        knjigaId:  pendingBorrowId,
+        naslov:    bookData.Naslov || "",
+        razred:    bookData.Razred || "",
+        ime:       name,
+        datum:     new Date().toISOString()
+      });
       document.getElementById("borrowOverlay").style.display = "none";
-      const q = document.getElementById("search").value.trim();
-      q ? searchBooks() : loadBooks();
+      // Update local cache entry so we don't need a full Firebase reload
+      const idx = allBooksCache.findIndex(b => b.id === pendingBorrowId);
+      if (idx !== -1) { allBooksCache[idx].izposojeno = true; allBooksCache[idx].izposoja = name; }
+      buildRazredChips(allBooksCache);
+      renderAndFilter();
     } catch (err) {
       errEl.textContent = "❌ Napaka: " + (err.message || err.code);
       errEl.style.display = "block";
@@ -901,8 +1242,10 @@
         izposoja:   ""
       });
       document.getElementById("returnOverlay").style.display = "none";
-      const q = document.getElementById("search").value.trim();
-      q ? searchBooks() : loadBooks();
+      const ridx = allBooksCache.findIndex(b => b.id === pendingReturnId);
+      if (ridx !== -1) { allBooksCache[ridx].izposojeno = false; allBooksCache[ridx].izposoja = ""; }
+      buildRazredChips(allBooksCache);
+      renderAndFilter();
     } catch (err) {
       errEl.textContent = "❌ Napaka: " + (err.message || err.code);
       errEl.style.display = "block";
@@ -942,9 +1285,19 @@
           <div>📅 ${book.Letnica || '—'} &nbsp;|&nbsp; 🏫 ${book.Razred || '—'}</div>
         </div>
         ${borrowerHtml}
-        <button class="btn-delete-book" data-del-id="${book.id}" data-del-naslov="${book.Naslov || ''}">
-          🗑 Izbriši
-        </button>
+        <div class="admin-card-actions">
+          <button class="btn-edit-book"
+                  data-edit-id="${book.id}"
+                  data-edit-naslov="${book.Naslov || ''}"
+                  data-edit-avtor="${book.Avtor || ''}"
+                  data-edit-letnica="${book.Letnica || ''}"
+                  data-edit-razred="${book.Razred || ''}">
+            ✏️ Uredi
+          </button>
+          <button class="btn-delete-book" data-del-id="${book.id}" data-del-naslov="${book.Naslov || ''}">
+            🗑 Izbriši
+          </button>
+        </div>
       `;
       list.appendChild(div);
     });
@@ -1338,14 +1691,70 @@
   let pendingDeleteId    = null;
   let pendingDeleteTitle = "";
 
+  let pendingEditId = null;
+
   document.getElementById("adminBookList").addEventListener("click", e => {
-    const btn = e.target.closest("button[data-del-id]");
-    if (!btn) return;
-    pendingDeleteId    = btn.dataset.delId;
-    pendingDeleteTitle = btn.dataset.delNaslov || "knjiga";
+    // Edit button
+    const editBtn = e.target.closest("button[data-edit-id]");
+    if (editBtn) {
+      pendingEditId = editBtn.dataset.editId;
+      document.getElementById("editBookSubtitle").textContent = `ID: ${pendingEditId}`;
+      document.getElementById("editNaslov").value  = editBtn.dataset.editNaslov  || "";
+      document.getElementById("editAvtor").value   = editBtn.dataset.editAvtor   || "";
+      document.getElementById("editLetnica").value = editBtn.dataset.editLetnica || "";
+      document.getElementById("editRazred").value  = editBtn.dataset.editRazred  || "";
+      document.getElementById("editBookError").style.display = "none";
+      document.getElementById("editBookOverlay").style.display = "flex";
+      setTimeout(() => document.getElementById("editNaslov").focus(), 50);
+      return;
+    }
+    // Delete button
+    const delBtn = e.target.closest("button[data-del-id]");
+    if (!delBtn) return;
+    pendingDeleteId    = delBtn.dataset.delId;
+    pendingDeleteTitle = delBtn.dataset.delNaslov || "knjiga";
     document.getElementById("deleteBookTitle").textContent = `Knjiga: "${pendingDeleteTitle}"`;
     document.getElementById("deleteError").style.display = "none";
     document.getElementById("deleteOverlay").style.display = "flex";
+  });
+
+  // Edit modal listeners
+  document.getElementById("editBookCancel").addEventListener("click", () => {
+    document.getElementById("editBookOverlay").style.display = "none";
+  });
+
+  document.getElementById("editBookConfirm").addEventListener("click", async () => {
+    const naslov  = document.getElementById("editNaslov").value.trim();
+    const avtor   = document.getElementById("editAvtor").value.trim();
+    const letnica = document.getElementById("editLetnica").value.trim();
+    const razred  = document.getElementById("editRazred").value.trim();
+    const errEl   = document.getElementById("editBookError");
+
+    if (!naslov || !avtor) {
+      errEl.textContent = "⚠️ Naslov in avtor sta obvezna.";
+      errEl.style.display = "block";
+      return;
+    }
+
+    const btn = document.getElementById("editBookConfirm");
+    btn.textContent = "Shranjujem..."; btn.disabled = true;
+
+    try {
+      await updateDoc(doc(db, "Knjige", pendingEditId), {
+        Naslov:  naslov,
+        Avtor:   avtor,
+        Letnica: letnica,
+        Razred:  razred
+      });
+      document.getElementById("editBookOverlay").style.display = "none";
+      const q = document.getElementById("adminSearch").value.trim();
+      q ? searchAdminBooks() : loadAdminBooks();
+    } catch (err) {
+      console.error(err);
+      errEl.textContent = "❌ Napaka: " + (err.message || err.code);
+      errEl.style.display = "block";
+    }
+    btn.textContent = "💾 Shrani spremembe"; btn.disabled = false;
   });
 
   document.getElementById("deleteCancel").addEventListener("click", () => {
@@ -1371,13 +1780,13 @@
 
   // ─── Public search / load ──────────────────────────────────────────────────
   document.getElementById("btnSearch").addEventListener("click", searchBooks);
-  document.getElementById("btnAll").addEventListener("click", loadBooks);
+  document.getElementById("btnAll").addEventListener("click", () => { activeRazred = null; activeStatus = "all"; document.getElementById("search").value = ""; renderAndFilter(); });
   document.getElementById("search").addEventListener("keydown", e => {
     if (e.key === "Enter") searchBooks();
   });
 
   // ─── Close modals on backdrop click ───────────────────────────────────────
-  ["adminOverlay","addBookOverlay","borrowOverlay","returnOverlay","adminLoginOverlay","deleteOverlay","csvOverlay","csvInstructionsOverlay","manageAdminsOverlay","addAdminOverlay"].forEach(id => {
+  ["adminOverlay","addBookOverlay","borrowOverlay","returnOverlay","adminLoginOverlay","deleteOverlay","csvOverlay","csvInstructionsOverlay","manageAdminsOverlay","addAdminOverlay","editBookOverlay","statsOverlay"].forEach(id => {
     const el = document.getElementById(id);
     el.addEventListener("click", e => { if (e.target === el) el.style.display = "none"; });
   });
@@ -1520,6 +1929,138 @@
     }
     btn.textContent = "✅ Dodaj admina"; btn.disabled = false;
   });
+
+  // ═══════════════════════════════════════════════════════
+  //  STATISTICS
+  // ═══════════════════════════════════════════════════════
+
+  document.getElementById("btnStats").addEventListener("click", () => {
+    document.getElementById("statsOverlay").style.display = "flex";
+    loadStats();
+  });
+  document.getElementById("statsClose").addEventListener("click", () => {
+    document.getElementById("statsOverlay").style.display = "none";
+  });
+
+  async function loadStats() {
+    const loading = document.getElementById("statsLoading");
+    const content = document.getElementById("statsContent");
+    loading.style.display = "block";
+    content.style.display = "none";
+
+    try {
+      const snapshot = await getDocs(collection(db, "Izposoje"));
+      const records = [];
+      snapshot.forEach(d => records.push(d.data()));
+
+      if (records.length === 0) {
+        loading.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--muted);">📭 Še ni zabeleženih izposoj.<br><small>Izposoje se začnejo beležiti od zdaj naprej.</small></div>';
+        return;
+      }
+
+      // ── Summary numbers ──────────────────────────────────
+      const now = new Date();
+      const thisMonthKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+      const thisMonth = records.filter(r => r.datum && r.datum.startsWith(thisMonthKey)).length;
+
+      // Top borrower
+      const borrowerCounts = {};
+      records.forEach(r => {
+        if (r.ime) borrowerCounts[r.ime] = (borrowerCounts[r.ime] || 0) + 1;
+      });
+      const topBorrower = Object.entries(borrowerCounts).sort((a,b) => b[1]-a[1])[0];
+
+      document.getElementById("statsTotalIzposoj").textContent = records.length;
+      document.getElementById("statsThisMonth").textContent   = thisMonth;
+      document.getElementById("statsTopBorrower").textContent = topBorrower ? topBorrower[0].split(" ")[0] : "—";
+
+      // ── Bar chart: last 6 months ──────────────────────────
+      const monthCounts = {};
+      records.forEach(r => {
+        if (!r.datum) return;
+        const key = r.datum.substring(0, 7); // "YYYY-MM"
+        monthCounts[key] = (monthCounts[key] || 0) + 1;
+      });
+
+      // Build last 6 months labels
+      const months = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+        const label = d.toLocaleString('sl-SI', { month: 'short' });
+        months.push({ key, label, count: monthCounts[key] || 0 });
+      }
+
+      const maxCount = Math.max(...months.map(m => m.count), 1);
+      const barChart  = document.getElementById("barChart");
+      const barLabels = document.getElementById("barLabels");
+      barChart.innerHTML  = "";
+      barLabels.innerHTML = "";
+
+      months.forEach(m => {
+        const heightPct = Math.round((m.count / maxCount) * 100);
+        const isCurrentMonth = m.key === thisMonthKey;
+
+        // Bar
+        const barWrap = document.createElement("div");
+        barWrap.style.cssText = "flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;";
+        const bar = document.createElement("div");
+        bar.style.cssText = `width:100%;height:${Math.max(heightPct, 4)}%;border-radius:6px 6px 0 0;background:${isCurrentMonth ? 'var(--accent)' : '#c5d9cc'};transition:height 0.4s ease;position:relative;`;
+        bar.title = `${m.label}: ${m.count} izposoj`;
+        const countLabel = document.createElement("div");
+        countLabel.style.cssText = "font-size:0.72rem;font-weight:700;color:var(--text);";
+        countLabel.textContent = m.count > 0 ? m.count : "";
+        barWrap.appendChild(countLabel);
+        barWrap.appendChild(bar);
+        barChart.appendChild(barWrap);
+
+        // Label
+        const lbl = document.createElement("div");
+        lbl.style.cssText = `flex:1;text-align:center;font-size:0.72rem;color:${isCurrentMonth ? 'var(--accent)' : 'var(--muted)'};font-weight:${isCurrentMonth ? '700' : '400'};`;
+        lbl.textContent = m.label;
+        barLabels.appendChild(lbl);
+      });
+
+      // ── Top 5 books ───────────────────────────────────────
+      const bookCounts = {};
+      const bookNames  = {};
+      records.forEach(r => {
+        if (r.knjigaId) {
+          bookCounts[r.knjigaId] = (bookCounts[r.knjigaId] || 0) + 1;
+          bookNames[r.knjigaId]  = r.naslov || r.knjigaId;
+        }
+      });
+      const topBooks = Object.entries(bookCounts)
+        .sort((a,b) => b[1]-a[1])
+        .slice(0, 5);
+
+      const topList = document.getElementById("topBooksList");
+      topList.innerHTML = "";
+      topBooks.forEach(([id, count], idx) => {
+        const row = document.createElement("div");
+        row.style.cssText = "display:flex;align-items:center;gap:0.7rem;background:#f5f0e8;border-radius:8px;padding:0.5rem 0.8rem;";
+        const pct = Math.round((count / topBooks[0][1]) * 100);
+        row.innerHTML = `
+          <span style="font-size:1rem;width:1.4rem;text-align:center;">${["🥇","🥈","🥉","4️⃣","5️⃣"][idx]}</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:0.85rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${bookNames[id]}</div>
+            <div style="height:5px;background:#ddd8cc;border-radius:3px;margin-top:4px;">
+              <div style="height:100%;width:${pct}%;background:var(--accent);border-radius:3px;"></div>
+            </div>
+          </div>
+          <span style="font-size:0.85rem;font-weight:700;color:var(--accent);white-space:nowrap;">${count}×</span>
+        `;
+        topList.appendChild(row);
+      });
+
+      loading.style.display = "none";
+      content.style.display = "block";
+
+    } catch (err) {
+      console.error(err);
+      loading.innerHTML = `❌ Napaka: ${err.message || err.code}`;
+    }
+  }
 
   // ─── Boot ─────────────────────────────────────────────────────────────────
   loadBooks();
