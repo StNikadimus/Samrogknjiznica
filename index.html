@@ -441,8 +441,9 @@
 <div id="adminOverlay" class="modal-overlay" style="display:none">
   <div class="modal-box">
     <h2 class="modal-title">🔐 Preveri identiteto</h2>
-    <p class="modal-sub">Vnesi svoje ime (mora biti na seznamu adminov)</p>
-    <input type="text" id="adminNameInput" class="modal-input" placeholder="Tvoje ime...">
+    <p class="modal-sub">Vnesi svoje ime in geslo</p>
+    <input type="text"     id="adminNameInput"     class="modal-input" placeholder="Tvoje ime...">
+    <input type="password" id="adminPasswordInput" class="modal-input" placeholder="Geslo...">
     <div id="adminError" class="modal-error" style="display:none"></div>
     <div class="modal-actions">
       <button class="btn btn-secondary" id="adminCancel">Prekliči</button>
@@ -499,8 +500,9 @@
 <div id="adminLoginOverlay" class="modal-overlay" style="display:none">
   <div class="modal-box">
     <h2 class="modal-title">🛡️ Admin prijava</h2>
-    <p class="modal-sub">Vnesi svoje admin ime za dostop do panela</p>
-    <input type="text" id="adminLoginInput" class="modal-input" placeholder="Tvoje ime...">
+    <p class="modal-sub">Vnesi svoje ime in geslo</p>
+    <input type="text"     id="adminLoginInput"    class="modal-input" placeholder="Tvoje ime...">
+    <input type="password" id="adminLoginPassword" class="modal-input" placeholder="Geslo...">
     <div id="adminLoginError" class="modal-error" style="display:none"></div>
     <div class="modal-actions">
       <button class="btn btn-secondary" id="adminLoginCancel">Prekliči</button>
@@ -613,12 +615,28 @@
   let pendingBorrowTitle = "";
 
   // ─── Check admin name against Firestore ───────────────────────────────────
-  async function checkAdmin(name) {
+  async function checkAdmin(name, password) {
     const adminDoc = await getDoc(doc(db, "Admin", "Admin_list"));
     if (!adminDoc.exists()) throw new Error("Admin dokument ne obstaja.");
     const data = adminDoc.data();
-    const adminNames = Object.values(data).map(v => v.toString().trim().toLowerCase());
-    return adminNames.includes(name.trim().toLowerCase());
+    // Find which adminN field matches the name
+    const n = name.trim().toLowerCase();
+    const p = password.trim();
+    let matched = false;
+    // data has admin1, admin2... and password1, password2...
+    // find the index where adminX matches name, then check passwordX
+    const keys = Object.keys(data);
+    for (const key of keys) {
+      if (key.startsWith("admin") && data[key].toString().trim().toLowerCase() === n) {
+        const num = key.replace("admin", "");
+        const pwKey = "password" + num;
+        if (data[pwKey] && data[pwKey].toString().trim() === p) {
+          matched = true;
+        }
+        break; // found the name, stop regardless
+      }
+    }
+    return matched;
   }
 
   // ═══════════════════════════════════════════════════════
@@ -946,6 +964,7 @@
   // ─── FAB # → admin login ──────────────────────────────────────────────────
   document.getElementById("fabAdmin").addEventListener("click", () => {
     document.getElementById("adminLoginInput").value = "";
+    document.getElementById("adminLoginPassword").value = "";
     document.getElementById("adminLoginError").style.display = "none";
     document.getElementById("adminLoginOverlay").style.display = "flex";
     setTimeout(() => document.getElementById("adminLoginInput").focus(), 50);
@@ -956,20 +975,25 @@
   document.getElementById("adminLoginInput").addEventListener("keydown", e => {
     if (e.key === "Enter") document.getElementById("adminLoginConfirm").click();
   });
+  document.getElementById("adminLoginPassword").addEventListener("keydown", e => {
+    if (e.key === "Enter") document.getElementById("adminLoginConfirm").click();
+  });
+
   document.getElementById("adminLoginConfirm").addEventListener("click", async () => {
-    const name  = document.getElementById("adminLoginInput").value.trim();
-    const errEl = document.getElementById("adminLoginError");
-    if (!name) {
-      errEl.textContent = "⚠️ Vnesi svoje ime.";
+    const name     = document.getElementById("adminLoginInput").value.trim();
+    const password = document.getElementById("adminLoginPassword").value.trim();
+    const errEl    = document.getElementById("adminLoginError");
+    if (!name || !password) {
+      errEl.textContent = "⚠️ Vnesi ime in geslo.";
       errEl.style.display = "block";
       return;
     }
     const btn = document.getElementById("adminLoginConfirm");
     btn.textContent = "Preverjam..."; btn.disabled = true;
     try {
-      const ok = await checkAdmin(name);
+      const ok = await checkAdmin(name, password);
       if (!ok) {
-        errEl.textContent = "🚫 Nisi na seznamu adminov.";
+        errEl.textContent = "🚫 Napačno ime ali geslo.";
         errEl.style.display = "block";
       } else {
         document.getElementById("adminLoginOverlay").style.display = "none";
@@ -985,6 +1009,7 @@
   // ─── FAB + → add book ─────────────────────────────────────────────────────
   document.getElementById("fabAdd").addEventListener("click", () => {
     document.getElementById("adminNameInput").value = "";
+    document.getElementById("adminPasswordInput").value = "";
     document.getElementById("adminError").style.display = "none";
     document.getElementById("adminOverlay").style.display = "flex";
     setTimeout(() => document.getElementById("adminNameInput").focus(), 50);
@@ -995,20 +1020,25 @@
   document.getElementById("adminNameInput").addEventListener("keydown", e => {
     if (e.key === "Enter") document.getElementById("adminConfirm").click();
   });
+  document.getElementById("adminPasswordInput").addEventListener("keydown", e => {
+    if (e.key === "Enter") document.getElementById("adminConfirm").click();
+  });
+
   document.getElementById("adminConfirm").addEventListener("click", async () => {
-    const name  = document.getElementById("adminNameInput").value.trim();
-    const errEl = document.getElementById("adminError");
-    if (!name) {
-      errEl.textContent = "⚠️ Vnesi svoje ime.";
+    const name     = document.getElementById("adminNameInput").value.trim();
+    const password = document.getElementById("adminPasswordInput").value.trim();
+    const errEl    = document.getElementById("adminError");
+    if (!name || !password) {
+      errEl.textContent = "⚠️ Vnesi ime in geslo.";
       errEl.style.display = "block";
       return;
     }
     const btn = document.getElementById("adminConfirm");
     btn.textContent = "Preverjam..."; btn.disabled = true;
     try {
-      const ok = await checkAdmin(name);
+      const ok = await checkAdmin(name, password);
       if (!ok) {
-        errEl.textContent = "🚫 Nisi na seznamu adminov.";
+        errEl.textContent = "🚫 Napačno ime ali geslo.";
         errEl.style.display = "block";
       } else {
         document.getElementById("adminOverlay").style.display = "none";
