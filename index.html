@@ -571,6 +571,128 @@
       white-space: nowrap;
     }
     .btn-delete-admin:hover { background: #c0392b; color: white; }
+
+    /* ── FAB suggest ─────────────────────────────────── */
+    #fabSuggest {
+      background: #f59e0b; color: white;
+      font-size: 1.3rem;
+      box-shadow: 0 4px 20px rgba(245,158,11,0.45);
+    }
+    #fabSuggest:hover { box-shadow: 0 6px 28px rgba(245,158,11,0.6); }
+
+    /* ── Admin tabs ──────────────────────────────────── */
+    .admin-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid var(--admin-border);
+      padding: 0 2rem;
+      background: #0f1219;
+    }
+    .admin-tab {
+      padding: 0.75rem 1.4rem;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #8892a4;
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .admin-tab:hover { color: #e0e6f0; }
+    .admin-tab.active { color: var(--admin-accent); border-bottom-color: var(--admin-accent); }
+    .admin-tab .tab-badge {
+      background: #c0392b;
+      color: white;
+      border-radius: 10px;
+      font-size: 0.7rem;
+      padding: 0.1rem 0.45rem;
+      font-weight: 700;
+      min-width: 18px;
+      text-align: center;
+    }
+
+    /* ── Predlog card ────────────────────────────────── */
+    .predlog-card {
+      background: var(--admin-card);
+      border: 1px solid var(--admin-border);
+      border-radius: 12px;
+      padding: 1.2rem;
+      animation: fadeIn 0.3s ease both;
+    }
+    .predlog-card .predlog-book {
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem;
+      color: #e0e6f0;
+      margin-bottom: 0.5rem;
+    }
+    .predlog-card .predlog-meta {
+      font-size: 0.82rem;
+      color: #8892a4;
+      margin-bottom: 0.7rem;
+      line-height: 1.7;
+    }
+    .predlog-changes {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin-bottom: 0.8rem;
+    }
+    .predlog-change-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      background: #1a1f2e;
+      border-radius: 6px;
+      padding: 0.35rem 0.7rem;
+    }
+    .predlog-change-row .field-label {
+      color: #8892a4;
+      min-width: 60px;
+      font-size: 0.78rem;
+    }
+    .predlog-change-row .old-val {
+      color: #e07070;
+      text-decoration: line-through;
+      font-size: 0.82rem;
+    }
+    .predlog-change-row .arrow { color: #8892a4; }
+    .predlog-change-row .new-val { color: #6fcf97; font-weight: 600; }
+    .predlog-actions { display: flex; gap: 0.6rem; }
+    .btn-approve {
+      flex: 1;
+      background: #1a2e22;
+      border: 1px solid #3d6b4f;
+      color: #6fcf97;
+      border-radius: 8px;
+      padding: 0.5rem;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-approve:hover { background: #3d6b4f; color: white; }
+    .btn-reject {
+      flex: 1;
+      background: #2a1a1a;
+      border: 1px solid #c0392b55;
+      color: #e07070;
+      border-radius: 8px;
+      padding: 0.5rem;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-reject:hover { background: #c0392b; color: white; }
   </style>
 </head>
 <body>
@@ -598,6 +720,22 @@
         </div>
       </div>
       <div class="filter-section">
+        <h3>🎭 Zvrst</h3>
+        <div class="filter-chip-list" id="zvrstFilters">
+          <div style="color:var(--muted);font-size:0.82rem;padding:0.3rem 0;">Nalagam...</div>
+        </div>
+      </div>
+      <div class="filter-section">
+        <h3>📄 Število strani</h3>
+        <div class="filter-chip-list" id="straniFilters">
+          <button class="filter-chip" data-strani="100">Pod 100</button>
+          <button class="filter-chip" data-strani="200">Pod 200</button>
+          <button class="filter-chip" data-strani="300">Pod 300</button>
+          <button class="filter-chip" data-strani="500">Pod 500</button>
+          <button class="filter-chip" data-strani="9999">500+</button>
+        </div>
+      </div>
+      <div class="filter-section">
         <h3>📋 Status</h3>
         <div class="filter-chip-list">
           <button class="filter-status-chip" id="filterAll">📚 Vse knjige</button>
@@ -617,8 +755,9 @@
   </div>
 
   <div class="fab-group">
-    <button class="fab" id="fabAdmin" title="Admin panel (#)">#</button>
-    <button class="fab" id="fabAdd"   title="Dodaj knjigo">+</button>
+    <button class="fab" id="fabAdmin"   title="Admin panel (#)">#</button>
+    <button class="fab" id="fabSuggest" title="Predlagaj popravek">✏️</button>
+    <button class="fab" id="fabAdd"     title="Dodaj knjigo">+</button>
   </div>
 </div>
 
@@ -639,21 +778,37 @@
 
   <input type="file" id="csvFileInput" accept=".csv" style="display:none">
 
-  <div class="admin-search-bar">
-    <input type="text" id="adminSearch" placeholder="Išči knjige ali po imenu izposojevalca...">
-    <button class="btn-admin-search" id="btnAdminSearch">🔍 Išči</button>
-    <button class="btn-admin-all"    id="btnAdminAll">📚 Vse knjige</button>
+  <!-- Tabs -->
+  <div class="admin-tabs">
+    <button class="admin-tab active" id="tabKnjige">📚 Knjige</button>
+    <button class="admin-tab" id="tabPredlogi">✏️ Predlogi <span class="tab-badge" id="predlogiBadge" style="display:none">0</span></button>
   </div>
 
-  <div class="admin-main">
-    <div class="admin-stats">
-      <div class="stat-box"><span id="statTotal">—</span>Skupaj knjig</div>
-      <div class="stat-box"><span id="statBorrowed">—</span>Izposojenih</div>
-      <div class="stat-box"><span id="statFree">—</span>Na voljo</div>
+  <!-- Tab: Knjige -->
+  <div id="tabKnjigeContent">
+    <div class="admin-search-bar">
+      <input type="text" id="adminSearch" placeholder="Išči knjige ali po imenu izposojevalca...">
+      <button class="btn-admin-search" id="btnAdminSearch">🔍 Išči</button>
+      <button class="btn-admin-all"    id="btnAdminAll">📚 Vse knjige</button>
     </div>
-    <div id="adminResultsTitle"></div>
-    <div id="adminStatusMsg">Nalagam...</div>
-    <div id="adminBookList" class="admin-book-grid"></div>
+    <div class="admin-main">
+      <div class="admin-stats">
+        <div class="stat-box"><span id="statTotal">—</span>Skupaj knjig</div>
+        <div class="stat-box"><span id="statBorrowed">—</span>Izposojenih</div>
+        <div class="stat-box"><span id="statFree">—</span>Na voljo</div>
+      </div>
+      <div id="adminResultsTitle"></div>
+      <div id="adminStatusMsg">Nalagam...</div>
+      <div id="adminBookList" class="admin-book-grid"></div>
+    </div>
+  </div>
+
+  <!-- Tab: Predlogi -->
+  <div id="tabPredlogiContent" style="display:none">
+    <div class="admin-main">
+      <div id="predlogiStatusMsg" style="text-align:center;padding:2rem;color:#8892a4;">Nalagam predloge...</div>
+      <div id="predlogiList" class="admin-book-grid"></div>
+    </div>
   </div>
 </div>
 
@@ -678,10 +833,12 @@
 <div id="addBookOverlay" class="modal-overlay" style="display:none">
   <div class="modal-box">
     <h2 class="modal-title">📖 Dodaj novo knjigo</h2>
-    <input type="text" id="newNaslov"  class="modal-input" placeholder="Naslov *">
-    <input type="text" id="newAvtor"   class="modal-input" placeholder="Avtor *">
-    <input type="text" id="newLetnica" class="modal-input" placeholder="Letnica">
-    <input type="text" id="newRazred"  class="modal-input" placeholder="Razred">
+    <input type="text"   id="newNaslov"  class="modal-input" placeholder="Naslov *">
+    <input type="text"   id="newAvtor"   class="modal-input" placeholder="Avtor *">
+    <input type="text"   id="newLetnica" class="modal-input" placeholder="Letnica">
+    <input type="text"   id="newRazred"  class="modal-input" placeholder="Razred (npr. 5–7)">
+    <input type="text"   id="newZvrst"   class="modal-input" placeholder="Zvrst (npr. Roman)">
+    <input type="number" id="newStrani"  class="modal-input" placeholder="Število strani" min="1">
     <div id="addBookError" class="modal-error" style="display:none"></div>
     <div class="modal-actions">
       <button class="btn btn-secondary" id="addBookCancel">Prekliči</button>
@@ -754,6 +911,8 @@
             <th style="padding:0.3rem 0.6rem;text-align:left;">Avtor</th>
             <th style="padding:0.3rem 0.6rem;text-align:left;">Letnica</th>
             <th style="padding:0.3rem 0.6rem;text-align:left;">Razred</th>
+            <th style="padding:0.3rem 0.6rem;text-align:left;">Zvrst</th>
+            <th style="padding:0.3rem 0.6rem;text-align:left;">Strani</th>
           </tr>
         </thead>
         <tbody>
@@ -762,12 +921,16 @@
             <td style="padding:0.3rem 0.6rem;">Antoine de Saint-Exupéry</td>
             <td style="padding:0.3rem 0.6rem;">1943</td>
             <td style="padding:0.3rem 0.6rem;">4–6</td>
+            <td style="padding:0.3rem 0.6rem;">Pravljica</td>
+            <td style="padding:0.3rem 0.6rem;">96</td>
           </tr>
           <tr>
             <td style="padding:0.3rem 0.6rem;">Harry Potter</td>
             <td style="padding:0.3rem 0.6rem;">J.K. Rowling</td>
             <td style="padding:0.3rem 0.6rem;">1997</td>
             <td style="padding:0.3rem 0.6rem;">6–9</td>
+            <td style="padding:0.3rem 0.6rem;">Fantazija</td>
+            <td style="padding:0.3rem 0.6rem;">309</td>
           </tr>
         </tbody>
       </table>
@@ -775,7 +938,7 @@
       <div style="margin-top:0.8rem;color:var(--muted);">
         ✅ Imena stolpcev niso občutljiva na velika/mala črka<br>
         ✅ Podprti ločili: vejica <code>,</code> in podpičje <code>;</code><br>
-        ✅ Polje Letnica in Razred nista obvezni
+        ✅ Polja Letnica, Razred, Zvrst in Strani niso obvezna
       </div>
     </div>
 
@@ -806,10 +969,12 @@
   <div class="modal-box" style="max-width:440px;">
     <h2 class="modal-title" style="color:#5b8dee;">✏️ Uredi knjigo</h2>
     <p class="modal-sub" id="editBookSubtitle"></p>
-    <input type="text" id="editNaslov"  class="modal-input" placeholder="Naslov *">
-    <input type="text" id="editAvtor"   class="modal-input" placeholder="Avtor *">
-    <input type="text" id="editLetnica" class="modal-input" placeholder="Letnica">
-    <input type="text" id="editRazred"  class="modal-input" placeholder="Razred">
+    <input type="text"   id="editNaslov"  class="modal-input" placeholder="Naslov *">
+    <input type="text"   id="editAvtor"   class="modal-input" placeholder="Avtor *">
+    <input type="text"   id="editLetnica" class="modal-input" placeholder="Letnica">
+    <input type="text"   id="editRazred"  class="modal-input" placeholder="Razred (npr. 5–7)">
+    <input type="text"   id="editZvrst"   class="modal-input" placeholder="Zvrst (npr. Roman)">
+    <input type="number" id="editStrani"  class="modal-input" placeholder="Število strani" min="1">
     <div id="editBookError" class="modal-error" style="display:none"></div>
     <div class="modal-actions">
       <button class="btn btn-secondary" id="editBookCancel">Prekliči</button>
@@ -905,6 +1070,31 @@
   </div>
 </div>
 
+<!-- Suggest change modal -->
+<div id="suggestOverlay" class="modal-overlay" style="display:none">
+  <div class="modal-box" style="max-width:460px;">
+    <h2 class="modal-title" style="color:#f59e0b;">✏️ Predlagaj popravek</h2>
+    <p class="modal-sub">Izberi knjigo in predlagaj popravek podatkov</p>
+    <input type="text" id="suggestSearch" class="modal-input" placeholder="Poišči knjigo po naslovu...">
+    <div id="suggestBookList" style="max-height:140px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;display:none;"></div>
+    <div id="suggestSelected" style="display:none;background:var(--accent-light);border-radius:8px;padding:0.6rem 0.9rem;font-size:0.88rem;">
+      <strong id="suggestSelectedTitle"></strong>
+    </div>
+    <div id="suggestFields" style="display:none;display:flex;flex-direction:column;gap:0.5rem;">
+      <p style="font-size:0.82rem;color:var(--muted);margin-top:0.3rem;">Pusti prazno polja ki jih ne želiš spremeniti:</p>
+      <input type="text" id="suggestZvrst"   class="modal-input" placeholder="Nova zvrst">
+      <input type="text" id="suggestRazred"  class="modal-input" placeholder="Nov razred">
+      <input type="number" id="suggestStrani" class="modal-input" placeholder="Novo število strani" min="1">
+      <input type="text" id="suggestIme"    class="modal-input" placeholder="Tvoje ime *">
+    </div>
+    <div id="suggestError" class="modal-error" style="display:none"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="suggestCancel">Prekliči</button>
+      <button class="btn btn-primary" id="suggestConfirm" style="background:#f59e0b;color:white;" disabled>Pošlji predlog ➜</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══════════════════════════════ SCRIPT ════════════════════════════════════ -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -957,6 +1147,8 @@
 
   // ── Filter state ──────────────────────────────────────────────────────────
   let activeRazred = null;   // null = vse, or a razred string
+  let activeZvrst  = null;   // null = vse, or a zvrst string
+  let activeStrani = null;   // null = vse, or a max page number
   let activeStatus = "all";  // "all" | "available" | "borrowed"
   let allBooksCache = [];    // full unfiltered list from Firebase
 
@@ -964,6 +1156,16 @@
     let result = books;
     if (activeRazred) {
       result = result.filter(b => (b.Razred || "").toString() === activeRazred);
+    }
+    if (activeZvrst) {
+      result = result.filter(b => (b.Zvrst || "").toLowerCase() === activeZvrst.toLowerCase());
+    }
+    if (activeStrani) {
+      if (activeStrani === 9999) {
+        result = result.filter(b => (parseInt(b.Strani) || 0) > 500);
+      } else {
+        result = result.filter(b => (parseInt(b.Strani) || 0) > 0 && (parseInt(b.Strani) || 0) <= activeStrani);
+      }
     }
     if (activeStatus === "available") {
       result = result.filter(b => !b.izposojeno);
@@ -974,34 +1176,66 @@
   }
 
   function buildRazredChips(books) {
-    const container = document.getElementById("razredFilters");
-    // Count books per razred
-    const counts = {};
+    // ── Razred chips ──
+    const razredContainer = document.getElementById("razredFilters");
+    const razredCounts = {};
     books.forEach(b => {
       const r = (b.Razred || "").toString().trim();
-      if (r) counts[r] = (counts[r] || 0) + 1;
+      if (r) razredCounts[r] = (razredCounts[r] || 0) + 1;
     });
-    const razredi = Object.keys(counts).sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
-
+    const razredi = Object.keys(razredCounts).sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
     if (razredi.length === 0) {
-      container.innerHTML = '<div style="color:var(--muted);font-size:0.82rem;padding:0.3rem 0;">Ni razredov</div>';
-      return;
+      razredContainer.innerHTML = '<div style="color:var(--muted);font-size:0.82rem;padding:0.3rem 0;">Ni razredov</div>';
+    } else {
+      razredContainer.innerHTML = "";
+      razredi.forEach(r => {
+        const btn = document.createElement("button");
+        btn.className = "filter-chip" + (activeRazred === r ? " active" : "");
+        btn.dataset.razred = r;
+        btn.innerHTML = `<span>${r}</span><span class="chip-count">${razredCounts[r]}</span>`;
+        razredContainer.appendChild(btn);
+      });
     }
 
-    container.innerHTML = "";
-    razredi.forEach(r => {
-      const btn = document.createElement("button");
-      btn.className = "filter-chip" + (activeRazred === r ? " active" : "");
-      btn.dataset.razred = r;
-      btn.innerHTML = `<span>${r}</span><span class="chip-count">${counts[r]}</span>`;
-      container.appendChild(btn);
+    // ── Zvrst chips ──
+    const zvrstContainer = document.getElementById("zvrstFilters");
+    const zvrstCounts = {};
+    books.forEach(b => {
+      const z = (b.Zvrst || "").trim();
+      if (z) zvrstCounts[z] = (zvrstCounts[z] || 0) + 1;
+    });
+    const zvrsti = Object.keys(zvrstCounts).sort();
+    if (zvrsti.length === 0) {
+      zvrstContainer.innerHTML = '<div style="color:var(--muted);font-size:0.82rem;padding:0.3rem 0;">Ni zvrsti</div>';
+    } else {
+      zvrstContainer.innerHTML = "";
+      zvrsti.forEach(z => {
+        const btn = document.createElement("button");
+        btn.className = "filter-chip" + (activeZvrst === z ? " active" : "");
+        btn.dataset.zvrst = z;
+        btn.innerHTML = `<span>${z}</span><span class="chip-count">${zvrstCounts[z]}</span>`;
+        zvrstContainer.appendChild(btn);
+      });
+    }
+
+    // ── Strani chips: update active state (static chips) ──
+    document.querySelectorAll("#straniFilters .filter-chip").forEach(btn => {
+      btn.classList.toggle("active", parseInt(btn.dataset.strani) === activeStrani);
     });
   }
 
   function updateFilterUI() {
     // Razred chips
-    document.querySelectorAll(".filter-chip").forEach(btn => {
+    document.querySelectorAll("#razredFilters .filter-chip").forEach(btn => {
       btn.classList.toggle("active", btn.dataset.razred === activeRazred);
+    });
+    // Zvrst chips
+    document.querySelectorAll("#zvrstFilters .filter-chip").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.zvrst === activeZvrst);
+    });
+    // Strani chips
+    document.querySelectorAll("#straniFilters .filter-chip").forEach(btn => {
+      btn.classList.toggle("active", parseInt(btn.dataset.strani) === activeStrani);
     });
     // Status chips
     document.getElementById("filterAll").className       = "filter-status-chip" + (activeStatus === "all"       ? " active-available" : "");
@@ -1024,6 +1258,8 @@
     const parts = [];
     if (q) parts.push(`"${q}"`);
     if (activeRazred) parts.push(`Razred: ${activeRazred}`);
+    if (activeZvrst)  parts.push(`Zvrst: ${activeZvrst}`);
+    if (activeStrani) parts.push(activeStrani === 9999 ? "500+ strani" : `Pod ${activeStrani} strani`);
     if (activeStatus !== "all") parts.push(activeStatus === "available" ? "Na voljo" : "Izposojene");
     if (parts.length > 0) {
       title.style.display = "block";
@@ -1041,7 +1277,23 @@
     const chip = e.target.closest(".filter-chip");
     if (!chip) return;
     const r = chip.dataset.razred;
-    activeRazred = (activeRazred === r) ? null : r; // toggle
+    activeRazred = (activeRazred === r) ? null : r;
+    renderAndFilter();
+  });
+
+  document.getElementById("zvrstFilters").addEventListener("click", e => {
+    const chip = e.target.closest(".filter-chip");
+    if (!chip) return;
+    const z = chip.dataset.zvrst;
+    activeZvrst = (activeZvrst === z) ? null : z;
+    renderAndFilter();
+  });
+
+  document.getElementById("straniFilters").addEventListener("click", e => {
+    const chip = e.target.closest(".filter-chip");
+    if (!chip) return;
+    const s = parseInt(chip.dataset.strani);
+    activeStrani = (activeStrani === s) ? null : s;
     renderAndFilter();
   });
 
@@ -1051,6 +1303,8 @@
 
   document.getElementById("btnClearFilters").addEventListener("click", () => {
     activeRazred = null;
+    activeZvrst  = null;
+    activeStrani = null;
     activeStatus = "all";
     document.getElementById("search").value = "";
     renderAndFilter();
@@ -1076,6 +1330,8 @@
           <div>✍️ ${book.Avtor || '—'}</div>
           <div>📅 ${book.Letnica || '—'}</div>
           <div>🏫 Razred: ${book.Razred || '—'}</div>
+          ${book.Zvrst  ? `<div>🎭 ${book.Zvrst}</div>`  : ''}
+          ${book.Strani ? `<div>📄 ${book.Strani} strani</div>` : ''}
         </div>
         <span class="status-badge ${book.izposojeno ? 'status-borrowed' : 'status-available'}">
           ${book.izposojeno ? '🔴 Izposojena' : '🟢 Na voljo'}
@@ -1283,6 +1539,8 @@
         <div class="book-meta">
           <div>✍️ ${book.Avtor || '—'}</div>
           <div>📅 ${book.Letnica || '—'} &nbsp;|&nbsp; 🏫 ${book.Razred || '—'}</div>
+          ${book.Zvrst  ? `<div>🎭 ${book.Zvrst}</div>`  : ''}
+          ${book.Strani ? `<div>📄 ${book.Strani} strani</div>` : ''}
         </div>
         ${borrowerHtml}
         <div class="admin-card-actions">
@@ -1291,7 +1549,9 @@
                   data-edit-naslov="${book.Naslov || ''}"
                   data-edit-avtor="${book.Avtor || ''}"
                   data-edit-letnica="${book.Letnica || ''}"
-                  data-edit-razred="${book.Razred || ''}">
+                  data-edit-razred="${book.Razred || ''}"
+                  data-edit-zvrst="${book.Zvrst || ''}"
+                  data-edit-strani="${book.Strani || ''}">
             ✏️ Uredi
           </button>
           <button class="btn-delete-book" data-del-id="${book.id}" data-del-naslov="${book.Naslov || ''}">
@@ -1361,7 +1621,9 @@
     document.getElementById("publicView").style.display = "none";
     document.getElementById("adminView").style.display  = "block";
     document.getElementById("adminSearch").value = "";
+    switchTab("knjige");
     loadAdminBooks();
+    updatePredlogiBadge();
   }
 
   function showPublicView() {
@@ -1457,7 +1719,7 @@
         errEl.style.display = "block";
       } else {
         document.getElementById("adminOverlay").style.display = "none";
-        ["newNaslov","newAvtor","newLetnica","newRazred"].forEach(id => {
+        ["newNaslov","newAvtor","newLetnica","newRazred","newZvrst","newStrani"].forEach(id => {
           document.getElementById(id).value = "";
         });
         document.getElementById("addBookError").style.display = "none";
@@ -1478,6 +1740,8 @@
     const avtor   = document.getElementById("newAvtor").value.trim();
     const letnica = document.getElementById("newLetnica").value.trim();
     const razred  = document.getElementById("newRazred").value.trim();
+    const zvrst   = document.getElementById("newZvrst").value.trim();
+    const strani  = parseInt(document.getElementById("newStrani").value) || 0;
     const errEl   = document.getElementById("addBookError");
     if (!naslov || !avtor) {
       errEl.textContent = "⚠️ Naslov in avtor sta obvezna.";
@@ -1492,8 +1756,10 @@
         Avtor:      avtor,
         Letnica:    letnica || "",
         Razred:     razred  || "",
+        Zvrst:      zvrst   || "",
+        Strani:     strani  || 0,
         izposojeno: false,
-        izposoja:   ""   // ← always initialised empty
+        izposoja:   ""
       });
       document.getElementById("addBookOverlay").style.display = "none";
       loadBooks();
@@ -1557,6 +1823,8 @@
       avtor:   findCol(header, ["avtor", "author", "pisatelj"]),
       letnica: findCol(header, ["letnica", "leto", "year"]),
       razred:  findCol(header, ["razred", "class", "grade"]),
+      zvrst:   findCol(header, ["zvrst", "genre", "žanr", "zanr"]),
+      strani:  findCol(header, ["strani", "stran", "pages", "page"]),
     };
 
     if (colMap.naslov === -1) {
@@ -1576,6 +1844,8 @@
         Avtor:      colMap.avtor   !== -1 ? (cols[colMap.avtor]   || "").trim() : "",
         Letnica:    colMap.letnica !== -1 ? (cols[colMap.letnica] || "").trim() : "",
         Razred:     colMap.razred  !== -1 ? (cols[colMap.razred]  || "").trim() : "",
+        Zvrst:      colMap.zvrst   !== -1 ? (cols[colMap.zvrst]   || "").trim() : "",
+        Strani:     colMap.strani  !== -1 ? (parseInt(cols[colMap.strani]) || 0) : 0,
         izposojeno: false,
         izposoja:   ""
       });
@@ -1600,6 +1870,8 @@
             <th style="padding:0.4rem 0.6rem;text-align:left;border-bottom:1px solid var(--border);">Avtor</th>
             <th style="padding:0.4rem 0.6rem;text-align:left;border-bottom:1px solid var(--border);">Letnica</th>
             <th style="padding:0.4rem 0.6rem;text-align:left;border-bottom:1px solid var(--border);">Razred</th>
+            <th style="padding:0.4rem 0.6rem;text-align:left;border-bottom:1px solid var(--border);">Zvrst</th>
+            <th style="padding:0.4rem 0.6rem;text-align:left;border-bottom:1px solid var(--border);">Strani</th>
           </tr>
         </thead>
         <tbody>
@@ -1609,8 +1881,10 @@
               <td style="padding:0.35rem 0.6rem;">${b.Avtor}</td>
               <td style="padding:0.35rem 0.6rem;">${b.Letnica}</td>
               <td style="padding:0.35rem 0.6rem;">${b.Razred}</td>
+              <td style="padding:0.35rem 0.6rem;">${b.Zvrst || ''}</td>
+              <td style="padding:0.35rem 0.6rem;">${b.Strani || ''}</td>
             </tr>`).join("")}
-          ${csvParsedBooks.length > 20 ? `<tr><td colspan="4" style="padding:0.5rem 0.6rem;color:var(--muted);font-style:italic;">... in še ${csvParsedBooks.length - 20} knjig</td></tr>` : ""}
+          ${csvParsedBooks.length > 20 ? `<tr><td colspan="6" style="padding:0.5rem 0.6rem;color:var(--muted);font-style:italic;">... in še ${csvParsedBooks.length - 20} knjig</td></tr>` : ""}
         </tbody>
       </table>`;
 
@@ -1703,6 +1977,8 @@
       document.getElementById("editAvtor").value   = editBtn.dataset.editAvtor   || "";
       document.getElementById("editLetnica").value = editBtn.dataset.editLetnica || "";
       document.getElementById("editRazred").value  = editBtn.dataset.editRazred  || "";
+      document.getElementById("editZvrst").value   = editBtn.dataset.editZvrst   || "";
+      document.getElementById("editStrani").value  = editBtn.dataset.editStrani  || "";
       document.getElementById("editBookError").style.display = "none";
       document.getElementById("editBookOverlay").style.display = "flex";
       setTimeout(() => document.getElementById("editNaslov").focus(), 50);
@@ -1728,6 +2004,8 @@
     const avtor   = document.getElementById("editAvtor").value.trim();
     const letnica = document.getElementById("editLetnica").value.trim();
     const razred  = document.getElementById("editRazred").value.trim();
+    const zvrst   = document.getElementById("editZvrst").value.trim();
+    const strani  = parseInt(document.getElementById("editStrani").value) || 0;
     const errEl   = document.getElementById("editBookError");
 
     if (!naslov || !avtor) {
@@ -1744,7 +2022,9 @@
         Naslov:  naslov,
         Avtor:   avtor,
         Letnica: letnica,
-        Razred:  razred
+        Razred:  razred,
+        Zvrst:   zvrst,
+        Strani:  strani || 0
       });
       document.getElementById("editBookOverlay").style.display = "none";
       const q = document.getElementById("adminSearch").value.trim();
@@ -1780,13 +2060,13 @@
 
   // ─── Public search / load ──────────────────────────────────────────────────
   document.getElementById("btnSearch").addEventListener("click", searchBooks);
-  document.getElementById("btnAll").addEventListener("click", () => { activeRazred = null; activeStatus = "all"; document.getElementById("search").value = ""; renderAndFilter(); });
+  document.getElementById("btnAll").addEventListener("click", () => { activeRazred = null; activeZvrst = null; activeStrani = null; activeStatus = "all"; document.getElementById("search").value = ""; renderAndFilter(); });
   document.getElementById("search").addEventListener("keydown", e => {
     if (e.key === "Enter") searchBooks();
   });
 
   // ─── Close modals on backdrop click ───────────────────────────────────────
-  ["adminOverlay","addBookOverlay","borrowOverlay","returnOverlay","adminLoginOverlay","deleteOverlay","csvOverlay","csvInstructionsOverlay","manageAdminsOverlay","addAdminOverlay","editBookOverlay","statsOverlay"].forEach(id => {
+  ["adminOverlay","addBookOverlay","borrowOverlay","returnOverlay","adminLoginOverlay","deleteOverlay","csvOverlay","csvInstructionsOverlay","manageAdminsOverlay","addAdminOverlay","editBookOverlay","statsOverlay","suggestOverlay"].forEach(id => {
     const el = document.getElementById(id);
     el.addEventListener("click", e => { if (e.target === el) el.style.display = "none"; });
   });
@@ -2060,6 +2340,260 @@
       console.error(err);
       loading.innerHTML = `❌ Napaka: ${err.message || err.code}`;
     }
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  ADMIN TABS
+  // ═══════════════════════════════════════════════════════
+  function switchTab(tab) {
+    const isKnjige = tab === "knjige";
+    document.getElementById("tabKnjigeContent").style.display  = isKnjige ? "block" : "none";
+    document.getElementById("tabPredlogiContent").style.display = isKnjige ? "none"  : "block";
+    document.getElementById("tabKnjige").classList.toggle("active",   isKnjige);
+    document.getElementById("tabPredlogi").classList.toggle("active", !isKnjige);
+    if (!isKnjige) loadPredlogi();
+  }
+
+  document.getElementById("tabKnjige").addEventListener("click",   () => switchTab("knjige"));
+  document.getElementById("tabPredlogi").addEventListener("click", () => switchTab("predlogi"));
+
+  // ═══════════════════════════════════════════════════════
+  //  SUGGEST CHANGE (public FAB)
+  // ═══════════════════════════════════════════════════════
+  let suggestSelectedBook = null;
+
+  document.getElementById("fabSuggest").addEventListener("click", () => {
+    suggestSelectedBook = null;
+    document.getElementById("suggestSearch").value = "";
+    document.getElementById("suggestBookList").style.display = "none";
+    document.getElementById("suggestBookList").innerHTML = "";
+    document.getElementById("suggestSelected").style.display = "none";
+    document.getElementById("suggestFields").style.display = "none";
+    document.getElementById("suggestZvrst").value = "";
+    document.getElementById("suggestRazred").value = "";
+    document.getElementById("suggestStrani").value = "";
+    document.getElementById("suggestIme").value = "";
+    document.getElementById("suggestError").style.display = "none";
+    document.getElementById("suggestConfirm").disabled = true;
+    document.getElementById("suggestOverlay").style.display = "flex";
+    setTimeout(() => document.getElementById("suggestSearch").focus(), 50);
+  });
+
+  document.getElementById("suggestCancel").addEventListener("click", () => {
+    document.getElementById("suggestOverlay").style.display = "none";
+  });
+
+  // Live search through cached books
+  document.getElementById("suggestSearch").addEventListener("input", () => {
+    const q = document.getElementById("suggestSearch").value.trim().toLowerCase();
+    const listEl = document.getElementById("suggestBookList");
+    if (!q) { listEl.style.display = "none"; return; }
+    const results = allBooksCache.filter(b => (b.Naslov || "").toLowerCase().includes(q)).slice(0, 8);
+    if (results.length === 0) { listEl.style.display = "none"; return; }
+    listEl.innerHTML = results.map(b => `
+      <div data-book-id="${b.id}" style="padding:0.55rem 0.9rem;cursor:pointer;border-bottom:1px solid var(--border);font-size:0.88rem;transition:background 0.1s;">
+        <strong>${b.Naslov}</strong> <span style="color:var(--muted);font-size:0.8rem;">– ${b.Avtor || ''}</span>
+      </div>`).join("");
+    listEl.style.display = "block";
+  });
+
+  // Hover effect + select book
+  document.getElementById("suggestBookList").addEventListener("mouseover", e => {
+    const row = e.target.closest("[data-book-id]");
+    if (row) row.style.background = "var(--accent-light)";
+  });
+  document.getElementById("suggestBookList").addEventListener("mouseout", e => {
+    const row = e.target.closest("[data-book-id]");
+    if (row) row.style.background = "";
+  });
+  document.getElementById("suggestBookList").addEventListener("click", e => {
+    const row = e.target.closest("[data-book-id]");
+    if (!row) return;
+    const bookId = row.dataset.bookId;
+    suggestSelectedBook = allBooksCache.find(b => b.id === bookId);
+    if (!suggestSelectedBook) return;
+    document.getElementById("suggestSelectedTitle").textContent = `📖 ${suggestSelectedBook.Naslov}`;
+    document.getElementById("suggestSelected").style.display = "block";
+    document.getElementById("suggestFields").style.display = "flex";
+    document.getElementById("suggestBookList").style.display = "none";
+    document.getElementById("suggestSearch").value = "";
+    // Pre-fill current values as placeholders
+    document.getElementById("suggestZvrst").placeholder  = `Nova zvrst (trenutno: ${suggestSelectedBook.Zvrst  || "—"})`;
+    document.getElementById("suggestRazred").placeholder = `Nov razred (trenutno: ${suggestSelectedBook.Razred || "—"})`;
+    document.getElementById("suggestStrani").placeholder = `Novo število strani (trenutno: ${suggestSelectedBook.Strani || "—"})`;
+    document.getElementById("suggestConfirm").disabled = false;
+  });
+
+  document.getElementById("suggestConfirm").addEventListener("click", async () => {
+    if (!suggestSelectedBook) return;
+    const zvrst  = document.getElementById("suggestZvrst").value.trim();
+    const razred = document.getElementById("suggestRazred").value.trim();
+    const strani = parseInt(document.getElementById("suggestStrani").value) || 0;
+    const ime    = document.getElementById("suggestIme").value.trim();
+    const errEl  = document.getElementById("suggestError");
+
+    if (!ime) {
+      errEl.textContent = "⚠️ Vnesi svoje ime.";
+      errEl.style.display = "block";
+      return;
+    }
+    if (!zvrst && !razred && !strani) {
+      errEl.textContent = "⚠️ Predlagaj vsaj eno spremembo.";
+      errEl.style.display = "block";
+      return;
+    }
+
+    const btn = document.getElementById("suggestConfirm");
+    btn.textContent = "Pošiljam..."; btn.disabled = true;
+
+    const spremembe = {};
+    if (zvrst)  spremembe.Zvrst  = { staro: suggestSelectedBook.Zvrst  || "", novo: zvrst };
+    if (razred) spremembe.Razred = { staro: suggestSelectedBook.Razred || "", novo: razred };
+    if (strani) spremembe.Strani = { staro: suggestSelectedBook.Strani || 0,  novo: strani };
+
+    try {
+      await addDoc(collection(db, "Predlogi"), {
+        knjigaId: suggestSelectedBook.id,
+        naslov:   suggestSelectedBook.Naslov || "",
+        ime:      ime,
+        datum:    new Date().toISOString(),
+        status:   "pending",
+        spremembe
+      });
+      document.getElementById("suggestOverlay").style.display = "none";
+      // Brief success toast
+      const toast = document.createElement("div");
+      toast.textContent = "✅ Predlog poslan — hvala!";
+      toast.style.cssText = "position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:#3d6b4f;color:white;padding:0.7rem 1.5rem;border-radius:10px;font-weight:600;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.2);animation:fadeIn 0.2s ease;";
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    } catch (err) {
+      errEl.textContent = "❌ Napaka: " + (err.message || err.code);
+      errEl.style.display = "block";
+    }
+    btn.textContent = "Pošlji predlog ➜"; btn.disabled = false;
+  });
+
+  // ═══════════════════════════════════════════════════════
+  //  LOAD & RENDER PREDLOGI (admin)
+  // ═══════════════════════════════════════════════════════
+  async function loadPredlogi() {
+    const statusEl = document.getElementById("predlogiStatusMsg");
+    const listEl   = document.getElementById("predlogiList");
+    statusEl.style.display = "block";
+    statusEl.textContent   = "Nalagam predloge...";
+    listEl.innerHTML       = "";
+
+    try {
+      const snapshot = await getDocs(collection(db, "Predlogi"));
+      const pending  = [];
+      snapshot.forEach(d => { const dat = d.data(); if (dat.status === "pending") pending.push({ id: d.id, ...dat }); });
+      pending.sort((a, b) => (b.datum || "").localeCompare(a.datum || ""));
+
+      // Update badge
+      const badge = document.getElementById("predlogiBadge");
+      if (pending.length > 0) {
+        badge.textContent    = pending.length;
+        badge.style.display  = "inline-block";
+      } else {
+        badge.style.display  = "none";
+      }
+
+      if (pending.length === 0) {
+        statusEl.innerHTML = '<div style="text-align:center;padding:3rem;color:#8892a4;">✅ Ni čakajočih predlogov</div>';
+        return;
+      }
+      statusEl.style.display = "none";
+
+      pending.forEach((p, i) => {
+        const card = document.createElement("div");
+        card.className = "predlog-card";
+        card.style.animationDelay = `${i * 0.05}s`;
+
+        const changesHtml = Object.entries(p.spremembe || {}).map(([field, val]) => `
+          <div class="predlog-change-row">
+            <span class="field-label">${field}</span>
+            <span class="old-val">${val.staro || "—"}</span>
+            <span class="arrow">→</span>
+            <span class="new-val">${val.novo}</span>
+          </div>`).join("");
+
+        const date = p.datum ? new Date(p.datum).toLocaleDateString("sl-SI", { day:"2-digit", month:"short", year:"numeric" }) : "—";
+
+        card.innerHTML = `
+          <div class="predlog-book">📖 ${p.naslov || "—"}</div>
+          <div class="predlog-meta">
+            <div>👤 ${p.ime || "—"} &nbsp;·&nbsp; 📅 ${date}</div>
+          </div>
+          <div class="predlog-changes">${changesHtml}</div>
+          <div class="predlog-actions">
+            <button class="btn-approve" data-predlog-id="${p.id}" data-knjiga-id="${p.knjigaId}">✅ Potrdi</button>
+            <button class="btn-reject"  data-predlog-id="${p.id}">❌ Zavrni</button>
+          </div>
+        `;
+        listEl.appendChild(card);
+      });
+
+    } catch (err) {
+      statusEl.textContent = "❌ Napaka: " + (err.message || err.code);
+    }
+  }
+
+  // Delegated approve / reject
+  document.getElementById("predlogiList").addEventListener("click", async e => {
+    const approveBtn = e.target.closest(".btn-approve");
+    const rejectBtn  = e.target.closest(".btn-reject");
+
+    if (approveBtn) {
+      const predlogId = approveBtn.dataset.predlogId;
+      const knjigaId  = approveBtn.dataset.knjigaId;
+      approveBtn.textContent = "..."; approveBtn.disabled = true;
+
+      // Get predlog data
+      const predlogSnap = await getDoc(doc(db, "Predlogi", predlogId));
+      if (!predlogSnap.exists()) return;
+      const spremembe = predlogSnap.data().spremembe || {};
+
+      // Build update object
+      const update = {};
+      Object.entries(spremembe).forEach(([field, val]) => { update[field] = val.novo; });
+
+      try {
+        await updateDoc(doc(db, "Knjige", knjigaId), update);
+        await updateDoc(doc(db, "Predlogi", predlogId), { status: "approved" });
+        // Update local cache too
+        const idx = allBooksCache.findIndex(b => b.id === knjigaId);
+        if (idx !== -1) Object.assign(allBooksCache[idx], update);
+        loadPredlogi();
+      } catch (err) {
+        alert("❌ Napaka: " + (err.message || err.code));
+        approveBtn.textContent = "✅ Potrdi"; approveBtn.disabled = false;
+      }
+    }
+
+    if (rejectBtn) {
+      const predlogId = rejectBtn.dataset.predlogId;
+      rejectBtn.textContent = "..."; rejectBtn.disabled = true;
+      try {
+        await updateDoc(doc(db, "Predlogi", predlogId), { status: "rejected" });
+        loadPredlogi();
+      } catch (err) {
+        alert("❌ Napaka: " + (err.message || err.code));
+        rejectBtn.textContent = "❌ Zavrni"; rejectBtn.disabled = false;
+      }
+    }
+  });
+
+  // Update badge when admin view opens
+  async function updatePredlogiBadge() {
+    try {
+      const snap = await getDocs(collection(db, "Predlogi"));
+      let count = 0;
+      snap.forEach(d => { if (d.data().status === "pending") count++; });
+      const badge = document.getElementById("predlogiBadge");
+      badge.textContent   = count;
+      badge.style.display = count > 0 ? "inline-block" : "none";
+    } catch (_) {}
   }
 
   // ─── Boot ─────────────────────────────────────────────────────────────────
