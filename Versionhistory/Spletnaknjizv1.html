@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Šolska knjižnica</title>
+</head>
+<body>
+
+<h1>Šolska knjižnica</h1>
+
+<input type="text" id="search" placeholder="Išči knjigo...">
+<button onclick="loadBooks()">Osveži</button>
+
+<div id="bookList"></div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD4IM7enkpAWUuu__82NfZtbDqoQJpDTcU",
+  authDomain: "samorogknjiznica.firebaseapp.com",
+  projectId: "samorogknjiznica",
+  storageBucket: "samorogknjiznica.firebasestorage.app",
+  messagingSenderId: "1036131542702",
+  appId: "1:1036131542702:web:14262569c8456c91b86f3f",
+  measurementId: "G-YD7YYRSNNK"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+async function loadBooks() {
+  const querySnapshot = await getDocs(collection(db, "Knjige"));
+  const list = document.getElementById("bookList");
+  list.innerHTML = "";
+
+  const searchValue = document.getElementById("search").value.toLowerCase();
+
+  querySnapshot.forEach((docSnap) => {
+    const book = docSnap.data();
+
+    if (!book.Naslov.toLowerCase().includes(searchValue)) return;
+
+    const div = document.createElement("div");
+    div.innerHTML = `
+      <h3>${book.Naslov}</h3>
+      <p>Avtor: ${book.Avtor}</p>
+      <p>Letnica: ${book.Letnica}</p>
+      <p>Razred: ${book.Razred}</p>
+      <p>Status: ${book.izposojeno ? "Izposojena" : "Na voljo"}</p>
+      <button onclick="toggleBorrow('${docSnap.id}', ${book.izposojeno})">
+        ${book.izposojeno ? "Vrni" : "Izposodi"}
+      </button>
+      <hr>
+    `;
+    list.appendChild(div);
+  });
+}
+
+window.toggleBorrow = async function(id, izposojeno) {
+  const bookRef = doc(db, "Knjige", id);
+
+  await updateDoc(bookRef, {
+    izposojeno: !izposojeno
+  });
+
+  loadBooks();
+}
+
+loadBooks();
+
+</script>
+
+</body>
+</html>
