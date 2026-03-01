@@ -409,8 +409,13 @@
       <h1>🛡️ Admin Panel</h1>
       <p id="adminWelcome">Pozdravljen, admin!</p>
     </div>
-    <button id="btnExitAdmin">← Nazaj na knjižnico</button>
+    <div style="display:flex;gap:0.7rem;align-items:center;flex-wrap:wrap;">
+      <button id="btnImportCSV" style="background:#2a2f40;color:#5b8dee;border:1px solid #333a4d;padding:0.5rem 1rem;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;transition:all 0.15s;">📂 Uvozi CSV</button>
+      <button id="btnExitAdmin">← Nazaj na knjižnico</button>
+    </div>
   </div>
+
+  <input type="file" id="csvFileInput" accept=".csv" style="display:none">
 
   <div class="admin-search-bar">
     <input type="text" id="adminSearch" placeholder="Išči knjige ali po imenu izposojevalca...">
@@ -500,6 +505,74 @@
     <div class="modal-actions">
       <button class="btn btn-secondary" id="adminLoginCancel">Prekliči</button>
       <button class="btn btn-primary"   id="adminLoginConfirm">Vstopi ➜</button>
+    </div>
+  </div>
+</div>
+
+<!-- CSV Instructions modal -->
+<div id="csvInstructionsOverlay" class="modal-overlay" style="display:none">
+  <div class="modal-box" style="max-width:520px;">
+    <h2 class="modal-title">📂 Uvoz knjig iz CSV</h2>
+    <p class="modal-sub">Preden uvozišč, se prepričaj da je tvoja CSV datoteka pravilno oblikovana:</p>
+
+    <div style="background:#f0ebe0;border-radius:10px;padding:1rem 1.2rem;font-size:0.88rem;line-height:1.9;">
+      <div><b>1. Izvozi iz Excela kot CSV</b><br>
+      <span style="color:var(--muted)">File → Save As → <i>CSV UTF-8 (Comma delimited)</i></span></div>
+
+      <div style="margin-top:0.8rem;"><b>2. Prva vrstica mora biti glava stolpcev:</b><br>
+      <code style="background:white;padding:0.2rem 0.5rem;border-radius:4px;font-size:0.85rem;">Naslov, Avtor, Letnica, Razred</code></div>
+
+      <div style="margin-top:0.8rem;"><b>3. Primer pravilne CSV datoteke:</b></div>
+      <table style="width:100%;border-collapse:collapse;margin-top:0.4rem;background:white;border-radius:6px;overflow:hidden;font-size:0.82rem;">
+        <thead>
+          <tr style="background:#3d6b4f;color:white;">
+            <th style="padding:0.3rem 0.6rem;text-align:left;">Naslov</th>
+            <th style="padding:0.3rem 0.6rem;text-align:left;">Avtor</th>
+            <th style="padding:0.3rem 0.6rem;text-align:left;">Letnica</th>
+            <th style="padding:0.3rem 0.6rem;text-align:left;">Razred</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid #eee;">
+            <td style="padding:0.3rem 0.6rem;">Mali princ</td>
+            <td style="padding:0.3rem 0.6rem;">Antoine de Saint-Exupéry</td>
+            <td style="padding:0.3rem 0.6rem;">1943</td>
+            <td style="padding:0.3rem 0.6rem;">4–6</td>
+          </tr>
+          <tr>
+            <td style="padding:0.3rem 0.6rem;">Harry Potter</td>
+            <td style="padding:0.3rem 0.6rem;">J.K. Rowling</td>
+            <td style="padding:0.3rem 0.6rem;">1997</td>
+            <td style="padding:0.3rem 0.6rem;">6–9</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div style="margin-top:0.8rem;color:var(--muted);">
+        ✅ Imena stolpcev niso občutljiva na velika/mala črka<br>
+        ✅ Podprti ločili: vejica <code>,</code> in podpičje <code>;</code><br>
+        ✅ Polje Letnica in Razred nista obvezni
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="csvInstructionsCancel">Prekliči</button>
+      <button class="btn btn-primary" id="csvInstructionsNext">Uvozi datoteko ➜</button>
+    </div>
+  </div>
+</div>
+
+<!-- CSV Import modal -->
+<div id="csvOverlay" class="modal-overlay" style="display:none">
+  <div class="modal-box" style="max-width:600px;">
+    <h2 class="modal-title">📂 Uvozi knjige iz CSV</h2>
+    <p class="modal-sub" id="csvPreviewInfo"></p>
+    <div id="csvPreviewTable" style="max-height:260px;overflow-y:auto;margin:0.3rem 0;border:1px solid var(--border);border-radius:8px;font-size:0.82rem;"></div>
+    <div id="csvError" class="modal-error" style="display:none"></div>
+    <div id="csvProgress" style="display:none;font-size:0.9rem;color:var(--muted);text-align:center;padding:0.5rem 0;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="csvCancel">Prekliči</button>
+      <button class="btn btn-primary" id="csvConfirm">✅ Uvozi vse v Firebase</button>
     </div>
   </div>
 </div>
@@ -603,8 +676,18 @@
       books.sort((a, b) => (a.Naslov || "").localeCompare(b.Naslov || ""));
       renderBooks(books);
     } catch (err) {
-      console.error(err);
-      status.innerHTML = `❌ <strong>Napaka:</strong> ${err.code || err.message}`;
+      console.error("🔴 Firebase error:", err);
+      let hint = "";
+      if (err.code === "permission-denied") {
+        hint = "<br><br>🔒 <b>Firestore pravila blokirajo dostop.</b><br>Pojdi: Firebase Console → Firestore → Rules → nastavi <code>allow read, write: if true;</code>";
+      } else if (err.code === "unavailable" || err.message?.includes("network")) {
+        hint = "<br><br>🌐 <b>Problem z omrežjem.</b> Preveri internetno povezavo.";
+      } else if (err.code === "failed-precondition") {
+        hint = "<br><br>⚙️ <b>Firestore ni omogočen.</b> Pojdi v Firebase Console in aktiviraj Firestore Database.";
+      } else {
+        hint = `<br><br>Odpri <b>F12 → Console</b> za več podrobnosti.<br><code style="font-size:0.75rem">${err.code || err.message}</code>`;
+      }
+      status.innerHTML = `❌ <strong>Napaka pri nalaganju</strong>${hint}`;
     }
   }
 
@@ -858,7 +941,7 @@
   document.getElementById("adminSearch").addEventListener("keydown", e => {
     if (e.key === "Enter") searchAdminBooks();
   });
-  document.getElementById("btnExitAdmin").addEventListener("click", showPublicView);
+  document.getElementById("btnExitAdmin").addEventListener("click", () => { window.location.reload(); });
 
   // ─── FAB # → admin login ──────────────────────────────────────────────────
   document.getElementById("fabAdmin").addEventListener("click", () => {
@@ -976,7 +1059,190 @@
     btn.textContent = "✅ Shrani knjigo"; btn.disabled = false;
   });
 
-  // ─── Delete book (admin only) ────────────────────────────────────────────────
+  // ─── CSV Import ───────────────────────────────────────────────────────────────
+  let csvParsedBooks = [];
+
+  document.getElementById("btnImportCSV").addEventListener("click", () => {
+    document.getElementById("csvInstructionsOverlay").style.display = "flex";
+  });
+
+  document.getElementById("csvInstructionsCancel").addEventListener("click", () => {
+    document.getElementById("csvInstructionsOverlay").style.display = "none";
+  });
+
+  document.getElementById("csvInstructionsNext").addEventListener("click", () => {
+    document.getElementById("csvInstructionsOverlay").style.display = "none";
+    document.getElementById("csvFileInput").click();
+  });
+
+  document.getElementById("csvFileInput").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target.result;
+      parseAndPreviewCSV(text);
+    };
+    reader.readAsText(file, "UTF-8");
+    // Reset so same file can be re-selected
+    e.target.value = "";
+  });
+
+  function parseAndPreviewCSV(text) {
+    const errEl  = document.getElementById("csvError");
+    const infoEl = document.getElementById("csvPreviewInfo");
+    errEl.style.display = "none";
+    csvParsedBooks = [];
+
+    // Split into lines, handle 
+
+
+    const lines = text.split(text.indexOf("\r") !== -1 ? "\r\n" : "\n").filter(l => l.trim() !== "");
+    if (lines.length < 2) {
+      errEl.textContent = "⚠️ CSV je prazen ali ima samo glavo.";
+      errEl.style.display = "block";
+      document.getElementById("csvOverlay").style.display = "flex";
+      return;
+    }
+
+    // Parse header — find which column index maps to which field
+    const header = splitCSVLine(lines[0]).map(h => h.trim().toLowerCase());
+    const colMap = {
+      naslov:  findCol(header, ["naslov", "title", "naziv"]),
+      avtor:   findCol(header, ["avtor", "author", "pisatelj"]),
+      letnica: findCol(header, ["letnica", "leto", "year"]),
+      razred:  findCol(header, ["razred", "class", "grade"]),
+    };
+
+    if (colMap.naslov === -1) {
+      errEl.textContent = "❌ Stolpec 'Naslov' ni bil najden v CSV. Preveri ime stolpca.";
+      errEl.style.display = "block";
+      document.getElementById("csvOverlay").style.display = "flex";
+      return;
+    }
+
+    // Parse data rows
+    for (let i = 1; i < lines.length; i++) {
+      const cols = splitCSVLine(lines[i]);
+      const naslov = colMap.naslov !== -1 ? (cols[colMap.naslov] || "").trim() : "";
+      if (!naslov) continue; // skip empty rows
+      csvParsedBooks.push({
+        Naslov:     naslov,
+        Avtor:      colMap.avtor   !== -1 ? (cols[colMap.avtor]   || "").trim() : "",
+        Letnica:    colMap.letnica !== -1 ? (cols[colMap.letnica] || "").trim() : "",
+        Razred:     colMap.razred  !== -1 ? (cols[colMap.razred]  || "").trim() : "",
+        izposojeno: false,
+        izposoja:   ""
+      });
+    }
+
+    if (csvParsedBooks.length === 0) {
+      errEl.textContent = "⚠️ Ni veljavnih vrstic za uvoz.";
+      errEl.style.display = "block";
+      document.getElementById("csvOverlay").style.display = "flex";
+      return;
+    }
+
+    // Build preview table
+    infoEl.textContent = `Najdenih ${csvParsedBooks.length} knjig za uvoz — preveri preview:`;
+    const tableDiv = document.getElementById("csvPreviewTable");
+    const preview  = csvParsedBooks.slice(0, 20); // show first 20
+    tableDiv.innerHTML = `
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="background:#f0ebe0;position:sticky;top:0;">
+            <th style="padding:0.4rem 0.6rem;text-align:left;border-bottom:1px solid var(--border);">Naslov</th>
+            <th style="padding:0.4rem 0.6rem;text-align:left;border-bottom:1px solid var(--border);">Avtor</th>
+            <th style="padding:0.4rem 0.6rem;text-align:left;border-bottom:1px solid var(--border);">Letnica</th>
+            <th style="padding:0.4rem 0.6rem;text-align:left;border-bottom:1px solid var(--border);">Razred</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${preview.map(b => `
+            <tr style="border-bottom:1px solid var(--border);">
+              <td style="padding:0.35rem 0.6rem;">${b.Naslov}</td>
+              <td style="padding:0.35rem 0.6rem;">${b.Avtor}</td>
+              <td style="padding:0.35rem 0.6rem;">${b.Letnica}</td>
+              <td style="padding:0.35rem 0.6rem;">${b.Razred}</td>
+            </tr>`).join("")}
+          ${csvParsedBooks.length > 20 ? `<tr><td colspan="4" style="padding:0.5rem 0.6rem;color:var(--muted);font-style:italic;">... in še ${csvParsedBooks.length - 20} knjig</td></tr>` : ""}
+        </tbody>
+      </table>`;
+
+    document.getElementById("csvProgress").style.display = "none";
+    document.getElementById("csvConfirm").disabled = false;
+    document.getElementById("csvConfirm").textContent = "✅ Uvozi vse v Firebase";
+    document.getElementById("csvOverlay").style.display = "flex";
+  }
+
+  function findCol(header, candidates) {
+    for (const c of candidates) {
+      const idx = header.findIndex(h => h.includes(c));
+      if (idx !== -1) return idx;
+    }
+    return -1;
+  }
+
+  function splitCSVLine(line) {
+    // Handles quoted fields with commas inside
+    const result = [];
+    let cur = "", inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQuotes && line[i+1] === '"') { cur += '"'; i++; }
+        else inQuotes = !inQuotes;
+      } else if ((ch === ',' || ch === ';') && !inQuotes) {
+        result.push(cur); cur = "";
+      } else {
+        cur += ch;
+      }
+    }
+    result.push(cur);
+    return result;
+  }
+
+  document.getElementById("csvCancel").addEventListener("click", () => {
+    document.getElementById("csvOverlay").style.display = "none";
+    csvParsedBooks = [];
+  });
+
+  document.getElementById("csvConfirm").addEventListener("click", async () => {
+    if (csvParsedBooks.length === 0) return;
+    const confirmBtn = document.getElementById("csvConfirm");
+    const progressEl = document.getElementById("csvProgress");
+    const errEl      = document.getElementById("csvError");
+    confirmBtn.disabled = true;
+    progressEl.style.display = "block";
+    errEl.style.display = "none";
+
+    let done = 0, failed = 0;
+    // Upload in batches to avoid overwhelming Firebase
+    const BATCH = 20;
+    for (let i = 0; i < csvParsedBooks.length; i += BATCH) {
+      const chunk = csvParsedBooks.slice(i, i + BATCH);
+      await Promise.all(chunk.map(book =>
+        addDoc(collection(db, "Knjige"), book).catch(() => failed++)
+      ));
+      done = Math.min(i + BATCH, csvParsedBooks.length);
+      progressEl.textContent = `Uvažam... ${done} / ${csvParsedBooks.length}`;
+    }
+
+    if (failed === 0) {
+      progressEl.textContent = `✅ Uspešno uvoženih ${done} knjig!`;
+    } else {
+      progressEl.textContent = `⚠️ Uvoženih ${done - failed} knjig, ${failed} napak.`;
+    }
+    confirmBtn.textContent = "✅ Uvoz končan";
+    csvParsedBooks = [];
+    // Refresh admin list after short delay so user can see success message
+    setTimeout(() => {
+      document.getElementById("csvOverlay").style.display = "none";
+      loadAdminBooks();
+    }, 2000);
+  });
+
+  // ─── Delete book (admin only) ─────────────────────────────────────────────
   let pendingDeleteId    = null;
   let pendingDeleteTitle = "";
 
@@ -1019,7 +1285,7 @@
   });
 
   // ─── Close modals on backdrop click ───────────────────────────────────────
-  ["adminOverlay","addBookOverlay","borrowOverlay","returnOverlay","adminLoginOverlay","deleteOverlay"].forEach(id => {
+  ["adminOverlay","addBookOverlay","borrowOverlay","returnOverlay","adminLoginOverlay","deleteOverlay","csvOverlay","csvInstructionsOverlay"].forEach(id => {
     const el = document.getElementById(id);
     el.addEventListener("click", e => { if (e.target === el) el.style.display = "none"; });
   });
