@@ -282,8 +282,44 @@
       box-shadow: var(--shadow);
       transition: transform 0.15s, box-shadow 0.15s;
       animation: fadeIn 0.3s ease both;
+      display: flex;
+      flex-direction: column;
     }
     .book-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+
+    .book-cover-wrap {
+      width: calc(100% + 2.4rem);
+      height: 180px;
+      margin: -1.2rem -1.2rem 1rem -1.2rem;
+      border-radius: 12px 12px 0 0;
+      overflow: hidden;
+      background: #f0ebe0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .book-cover-wrap img {
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      display: block;
+      border-radius: 2px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    }
+    .book-cover-placeholder {
+      font-size: 3rem;
+      opacity: 0.25;
+    }
+    .book-cover-wrap.loading {
+      animation: coverPulse 1.2s ease infinite;
+    }
+    @keyframes coverPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
 
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(8px); }
@@ -770,6 +806,7 @@
       <p id="adminWelcome">Pozdravljen, admin!</p>
     </div>
     <div style="display:flex;gap:0.7rem;align-items:center;flex-wrap:wrap;">
+      <button id="btnRefreshCovers" style="background:#2a2f40;color:#e879f9;border:1px solid #3d1a4a;padding:0.5rem 1rem;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;transition:all 0.15s;" title="Poišči manjkajoče naslovnice na spletu">🖼 Naslovnice</button>
       <button id="btnStats" style="background:#2a2f40;color:#f59e0b;border:1px solid #4a3a1a;padding:0.5rem 1rem;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;transition:all 0.15s;">📊 Statistike</button>
       <button id="btnImportCSV" style="background:#2a2f40;color:#5b8dee;border:1px solid #333a4d;padding:0.5rem 1rem;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;transition:all 0.15s;">📂 Uvozi CSV</button>
       <button id="btnManageAdmins" style="background:#2a2f40;color:#a78bfa;border:1px solid #3d3560;padding:0.5rem 1rem;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;transition:all 0.15s;">👥 Admini</button>
@@ -785,6 +822,7 @@
     <button class="admin-tab" id="tabPredlogi">✏️ Predlogi <span class="tab-badge" id="predlogiBadge" style="display:none">0</span></button>
     <button class="admin-tab" id="tabLog">🕓 Log</button>
     <button class="admin-tab" id="tabSettings">⚙️ Nastavitve</button>
+    <button class="admin-tab" id="tabIzposojene">📋 Izposojene</button>
   </div>
 
   <!-- Tab: Knjige -->
@@ -900,6 +938,25 @@ Knjižnica Samorog 🦄</textarea>
     </div>
   </div>
 
+  <!-- Tab: Izposojene knjige -->
+  <div id="tabIzposojeneContent" style="display:none">
+    <div class="admin-main">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.7rem;">
+        <div style="font-size:0.85rem;color:#8892a4;" id="izposojeneInfo">Nalagam...</div>
+        <div style="display:flex;gap:0.5rem;">
+          <select id="izposojeneFilter" style="background:#2a2f40;color:#e0e6f0;border:1px solid var(--admin-border);border-radius:8px;padding:0.4rem 0.8rem;font-family:'DM Sans',sans-serif;font-size:0.85rem;cursor:pointer;">
+            <option value="all">Vse izposojene</option>
+            <option value="overdue">⚠️ Zamujene</option>
+            <option value="soon">🔔 Rok kmalu</option>
+            <option value="ok">✅ V roku</option>
+          </select>
+        </div>
+      </div>
+      <div id="izposojeneStatusMsg" style="text-align:center;padding:2rem;color:#8892a4;"></div>
+      <div id="izposojeneList" style="display:flex;flex-direction:column;gap:0.5rem;"></div>
+    </div>
+  </div>
+
   <div id="tabLogContent" style="display:none">
     <div class="admin-main">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
@@ -955,9 +1012,10 @@ Knjižnica Samorog 🦄</textarea>
     <h2 class="modal-title">📖 Izposoja knjige</h2>
     <p class="modal-sub" id="borrowBookTitle"></p>
     <input type="text" id="borrowNameInput" class="modal-input" placeholder="Tvoje ime in priimek...">
+    <div id="borrowNameStatus" style="display:none;font-size:0.8rem;padding:0.3rem 0.2rem;"></div>
     <div id="borrowEmailField" style="display:none;">
-      <input type="email" id="borrowEmailInput" class="modal-input" placeholder="Tvoj email za opomnik (neobvezno)">
-      <div style="font-size:0.78rem;color:var(--muted);margin-top:-0.3rem;margin-bottom:0.3rem;">📧 Poslali ti bomo opomnik pred rokom vrnitve</div>
+      <input type="email" id="borrowEmailInput" class="modal-input" placeholder="Tvoj email za opomnik *">
+      <div style="font-size:0.78rem;color:var(--muted);margin-top:-0.3rem;margin-bottom:0.3rem;">📧 Shranimo ga za naslednjič — ne boš ga vpisal znova</div>
     </div>
     <div id="borrowError" class="modal-error" style="display:none"></div>
     <div class="modal-actions">
@@ -1081,6 +1139,7 @@ Knjižnica Samorog 🦄</textarea>
     <input type="text"   id="editRazred"  class="modal-input" placeholder="Razred (npr. 5–7)">
     <input type="text"   id="editZvrst"   class="modal-input" placeholder="Zvrst (npr. Roman)">
     <input type="number" id="editStrani"  class="modal-input" placeholder="Število strani" min="1">
+    <input type="url"    id="editNaslovnica" class="modal-input" placeholder="URL naslovnice (neobvezno)">
     <div id="editBookError" class="modal-error" style="display:none"></div>
     <div class="modal-actions">
       <button class="btn btn-secondary" id="editBookCancel">Prekliči</button>
@@ -1188,6 +1247,8 @@ Knjižnica Samorog 🦄</textarea>
     </div>
     <div id="suggestFields" style="display:none;display:flex;flex-direction:column;gap:0.5rem;">
       <p style="font-size:0.82rem;color:var(--muted);margin-top:0.3rem;">Pusti prazno polja ki jih ne želiš spremeniti:</p>
+      <input type="text" id="suggestNaslov"  class="modal-input" placeholder="Nov naslov">
+      <input type="text" id="suggestAvtor"   class="modal-input" placeholder="Nov avtor">
       <input type="text" id="suggestZvrst"   class="modal-input" placeholder="Nova zvrst">
       <input type="text" id="suggestRazred"  class="modal-input" placeholder="Nov razred">
       <input type="number" id="suggestStrani" class="modal-input" placeholder="Novo število strani" min="1">
@@ -1430,7 +1491,11 @@ Knjižnica Samorog 🦄</textarea>
       const div = document.createElement("div");
       div.className = "book-card";
       div.style.animationDelay = `${i * 0.04}s`;
+      const coverHtml = book.naslovnica
+        ? `<div class="book-cover-wrap"><img src="${book.naslovnica}" alt="Naslovnica" loading="lazy" onerror="this.parentElement.innerHTML='<div class=book-cover-placeholder>📚</div>'"></div>`
+        : `<div class="book-cover-wrap"><div class="book-cover-placeholder">📚</div></div>`;
       div.innerHTML = `
+        ${coverHtml}
         <div class="book-title ${book.izposojeno ? 'borrowed' : ''}">${book.Naslov || '—'}</div>
         <div class="book-meta">
           <div>✍️ ${book.Avtor || '—'}</div>
@@ -1469,6 +1534,8 @@ Knjižnica Samorog 🦄</textarea>
       allBooksCache = books;
       buildRazredChips(books);
       renderAndFilter();
+      // Background: fetch covers for books that don't have one
+      fetchMissingCovers(books);
     } catch (err) {
       console.error("🔴 Firebase error:", err);
       let hint = "";
@@ -1503,6 +1570,9 @@ Knjižnica Samorog 🦄</textarea>
     pendingBorrowTitle = naslov;
     document.getElementById("borrowBookTitle").textContent = `Knjiga: "${naslov}"`;
     document.getElementById("borrowNameInput").value = "";
+    document.getElementById("borrowEmailInput").value = "";
+    document.getElementById("borrowEmailField").style.display = "none";
+    document.getElementById("borrowNameStatus").style.display = "none";
     document.getElementById("borrowError").style.display = "none";
     document.getElementById("borrowOverlay").style.display = "flex";
     setTimeout(() => document.getElementById("borrowNameInput").focus(), 50);
@@ -1536,8 +1606,40 @@ Knjižnica Samorog 🦄</textarea>
   document.getElementById("borrowCancel").addEventListener("click", () => {
     document.getElementById("borrowOverlay").style.display = "none";
   });
+  let borrowEmailAlreadyKnown = false;
+
+  async function checkNameForEmail() {
+    if (!appSettings.emailEnabled) return;
+    const name = document.getElementById("borrowNameInput").value.trim();
+    if (!name) return;
+    const statusEl = document.getElementById("borrowNameStatus");
+    const emailField = document.getElementById("borrowEmailField");
+    statusEl.style.display = "block";
+    statusEl.style.color = "var(--muted)";
+    statusEl.textContent = "🔍 Preverjam...";
+
+    const existingEmail = await getUserEmail(name);
+    if (existingEmail) {
+      borrowEmailAlreadyKnown = true;
+      emailField.style.display = "none";
+      statusEl.textContent = `📧 Opomnik bo poslan na: ${existingEmail}`;
+      statusEl.style.color = "var(--accent)";
+    } else {
+      borrowEmailAlreadyKnown = false;
+      emailField.style.display = "block";
+      statusEl.style.display = "none";
+      setTimeout(() => document.getElementById("borrowEmailInput").focus(), 50);
+    }
+  }
+
   document.getElementById("borrowNameInput").addEventListener("keydown", e => {
-    if (e.key === "Enter") document.getElementById("borrowConfirm").click();
+    if (e.key === "Enter") {
+      e.preventDefault();
+      checkNameForEmail();
+    }
+  });
+  document.getElementById("borrowNameInput").addEventListener("blur", () => {
+    checkNameForEmail();
   });
   document.getElementById("borrowConfirm").addEventListener("click", async () => {
     const name  = document.getElementById("borrowNameInput").value.trim();
@@ -1548,6 +1650,14 @@ Knjižnica Samorog 🦄</textarea>
       return;
     }
     const emailInput = document.getElementById("borrowEmailInput").value.trim();
+    // If email enabled and not known, require email
+    if (appSettings.emailEnabled && !borrowEmailAlreadyKnown && !emailInput) {
+      document.getElementById("borrowEmailField").style.display = "block";
+      errEl.textContent = "⚠️ Vnesi email za opomnik.";
+      errEl.style.display = "block";
+      document.getElementById("borrowEmailInput").focus();
+      return;
+    }
     const btn = document.getElementById("borrowConfirm");
     btn.textContent = "Shranjujem..."; btn.disabled = true;
     try {
@@ -1570,10 +1680,11 @@ Knjižnica Samorog 🦄</textarea>
         datum:     new Date().toISOString(),
         rokVrnitve: dueDateISO
       });
-      // Save email if provided and email enabled
-      if (appSettings.emailEnabled && emailInput) {
+      // Save new email if provided
+      if (appSettings.emailEnabled && emailInput && !borrowEmailAlreadyKnown) {
         await saveUserEmail(name, emailInput);
       }
+      publicLog("izposoja", `Izposodil knjigo: "${bookData.Naslov || ''}" → ${name}`, { knjigaId: pendingBorrowId, rokVrnitve: dueDateISO });
       document.getElementById("borrowOverlay").style.display = "none";
       const idx = allBooksCache.findIndex(b => b.id === pendingBorrowId);
       if (idx !== -1) { allBooksCache[idx].izposojeno = true; allBooksCache[idx].izposoja = name; allBooksCache[idx].rokVrnitve = dueDateISO; }
@@ -1610,13 +1721,16 @@ Knjižnica Samorog 🦄</textarea>
     const btn = document.getElementById("returnConfirm");
     btn.textContent = "Vračam..."; btn.disabled = true;
     try {
+      const returnBook = allBooksCache.find(b => b.id === pendingReturnId) || {};
       await updateDoc(doc(db, "Knjige", pendingReturnId), {
         izposojeno: false,
-        izposoja:   ""
+        izposoja:   "",
+        rokVrnitve: ""
       });
+      publicLog("vrnitev", `Vrnil knjigo: "${returnBook.Naslov || ''}" → ${name}`, { knjigaId: pendingReturnId });
       document.getElementById("returnOverlay").style.display = "none";
       const ridx = allBooksCache.findIndex(b => b.id === pendingReturnId);
-      if (ridx !== -1) { allBooksCache[ridx].izposojeno = false; allBooksCache[ridx].izposoja = ""; }
+      if (ridx !== -1) { allBooksCache[ridx].izposojeno = false; allBooksCache[ridx].izposoja = ""; allBooksCache[ridx].rokVrnitve = ""; }
       buildRazredChips(allBooksCache);
       renderAndFilter();
     } catch (err) {
@@ -1648,10 +1762,16 @@ Knjižnica Samorog 🦄</textarea>
       const div = document.createElement("div");
       div.className = `admin-book-card ${book.izposojeno ? 'is-borrowed' : ''}`;
       div.style.animationDelay = `${i * 0.03}s`;
+      div.style.cssText += ";display:flex;gap:0.8rem;align-items:flex-start;";
       const borrowerHtml = book.izposojeno
         ? `<div class="borrower-tag">👤 ${book.izposoja || 'Neznano'}</div>`
         : `<div class="borrower-tag available">✅ Na voljo</div>`;
+      const adminCoverHtml = book.naslovnica
+        ? `<img src="${book.naslovnica}" alt="" style="width:52px;height:72px;object-fit:cover;border-radius:5px;flex-shrink:0;margin-top:2px;" loading="lazy" onerror="this.style.display='none'">`
+        : `<div style="width:52px;height:72px;background:#1a1f2e;border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-top:2px;">📚</div>`;
       div.innerHTML = `
+        ${adminCoverHtml}
+        <div style="flex:1;min-width:0;">
         <div class="book-title ${book.izposojeno ? 'borrowed' : ''}">${book.Naslov || '—'}</div>
         <div class="book-meta">
           <div>✍️ ${book.Avtor || '—'}</div>
@@ -1669,12 +1789,14 @@ Knjižnica Samorog 🦄</textarea>
                   data-edit-letnica="${book.Letnica || ''}"
                   data-edit-razred="${book.Razred || ''}"
                   data-edit-zvrst="${book.Zvrst || ''}"
-                  data-edit-strani="${book.Strani || ''}">
+                  data-edit-strani="${book.Strani || ''}"
+                  data-edit-naslovnica="${book.naslovnica || ''}">
             ✏️ Uredi
           </button>
           <button class="btn-delete-book" data-del-id="${book.id}" data-del-naslov="${book.Naslov || ''}">
             🗑 Izbriši
           </button>
+        </div>
         </div>
       `;
       list.appendChild(div);
@@ -1757,6 +1879,19 @@ Knjižnica Samorog 🦄</textarea>
         datum: new Date().toISOString()
       });
     } catch (e) { console.warn("Log napaka:", e); }
+  }
+
+  // Public log — za ne-admin akcije (izposoja, vrnitev)
+  async function publicLog(tip, opis, extra = {}) {
+    try {
+      await addDoc(collection(db, "AdminLog"), {
+        admin: "— javni uporabnik —",
+        tip,
+        opis,
+        datum: new Date().toISOString(),
+        ...extra
+      });
+    } catch (e) { console.warn("Public log napaka:", e); }
   }
 
   function showPublicView() {
@@ -1884,7 +2019,7 @@ Knjižnica Samorog 🦄</textarea>
     const btn = document.getElementById("addBookConfirm");
     btn.textContent = "Shranjujem..."; btn.disabled = true;
     try {
-      await addDoc(collection(db, "Knjige"), {
+      const newDocRef = await addDoc(collection(db, "Knjige"), {
         Naslov:     naslov,
         Avtor:      avtor,
         Letnica:    letnica || "",
@@ -1895,6 +2030,10 @@ Knjižnica Samorog 🦄</textarea>
         izposoja:   ""
       });
       logAction("dodaj_knjigo", `Dodal knjigo: "${naslov}" (${avtor})`);
+      // Fetch cover in background
+      fetchCoverUrl(naslov, avtor).then(url => {
+        if (url) updateDoc(doc(db, "Knjige", newDocRef.id), { naslovnica: url }).catch(() => {});
+      });
       document.getElementById("addBookOverlay").style.display = "none";
       loadBooks();
     } catch (err) {
@@ -2082,12 +2221,14 @@ Knjižnica Samorog 🦄</textarea>
     }
 
     if (failed === 0) {
-      progressEl.textContent = `✅ Uspešno uvoženih ${done} knjig!`;
+      progressEl.textContent = `✅ Uspešno uvoženih ${done} knjig! Nalagam naslovnice...`;
       logAction("uvoz_csv", `Uvozil ${done} knjig iz CSV`);
     } else {
-      progressEl.textContent = `⚠️ Uvoženih ${done - failed} knjig, ${failed} napak.`;
+      progressEl.textContent = `⚠️ Uvoženih ${done - failed} knjig, ${failed} napak. Nalagam naslovnice...`;
       logAction("uvoz_csv", `Uvozil ${done - failed} knjig iz CSV (${failed} napak)`);
     }
+    // Reload and fetch covers for newly imported books
+    loadAdminBooks();
     confirmBtn.textContent = "✅ Uvoz končan";
     csvParsedBooks = [];
     // Refresh admin list after short delay so user can see success message
@@ -2113,8 +2254,9 @@ Knjižnica Samorog 🦄</textarea>
       document.getElementById("editAvtor").value   = editBtn.dataset.editAvtor   || "";
       document.getElementById("editLetnica").value = editBtn.dataset.editLetnica || "";
       document.getElementById("editRazred").value  = editBtn.dataset.editRazred  || "";
-      document.getElementById("editZvrst").value   = editBtn.dataset.editZvrst   || "";
-      document.getElementById("editStrani").value  = editBtn.dataset.editStrani  || "";
+      document.getElementById("editZvrst").value      = editBtn.dataset.editZvrst      || "";
+      document.getElementById("editStrani").value     = editBtn.dataset.editStrani     || "";
+      document.getElementById("editNaslovnica").value = editBtn.dataset.editNaslovnica || "";
       document.getElementById("editBookError").style.display = "none";
       document.getElementById("editBookOverlay").style.display = "flex";
       setTimeout(() => document.getElementById("editNaslov").focus(), 50);
@@ -2140,8 +2282,9 @@ Knjižnica Samorog 🦄</textarea>
     const avtor   = document.getElementById("editAvtor").value.trim();
     const letnica = document.getElementById("editLetnica").value.trim();
     const razred  = document.getElementById("editRazred").value.trim();
-    const zvrst   = document.getElementById("editZvrst").value.trim();
-    const strani  = parseInt(document.getElementById("editStrani").value) || 0;
+    const zvrst      = document.getElementById("editZvrst").value.trim();
+    const strani     = parseInt(document.getElementById("editStrani").value) || 0;
+    const naslovnica = document.getElementById("editNaslovnica").value.trim();
     const errEl   = document.getElementById("editBookError");
 
     if (!naslov || !avtor) {
@@ -2154,14 +2297,9 @@ Knjižnica Samorog 🦄</textarea>
     btn.textContent = "Shranjujem..."; btn.disabled = true;
 
     try {
-      await updateDoc(doc(db, "Knjige", pendingEditId), {
-        Naslov:  naslov,
-        Avtor:   avtor,
-        Letnica: letnica,
-        Razred:  razred,
-        Zvrst:   zvrst,
-        Strani:  strani || 0
-      });
+      const editUpdate = { Naslov: naslov, Avtor: avtor, Letnica: letnica, Razred: razred, Zvrst: zvrst, Strani: strani || 0 };
+      if (naslovnica) editUpdate.naslovnica = naslovnica;
+      await updateDoc(doc(db, "Knjige", pendingEditId), editUpdate);
       logAction("uredi_knjigo", `Uredil knjigo: "${naslov}"`);
       document.getElementById("editBookOverlay").style.display = "none";
       const q = document.getElementById("adminSearch").value.trim();
@@ -2485,19 +2623,37 @@ Knjižnica Samorog 🦄</textarea>
   //  ADMIN TABS
   // ═══════════════════════════════════════════════════════
   function switchTab(tab) {
-    ["knjige","predlogi","log","settings"].forEach(t => {
+    ["knjige","predlogi","log","settings","izposojene"].forEach(t => {
       document.getElementById("tab" + t.charAt(0).toUpperCase() + t.slice(1) + "Content").style.display = tab === t ? "block" : "none";
       document.getElementById("tab"   + t.charAt(0).toUpperCase() + t.slice(1)).classList.toggle("active", tab === t);
     });
     if (tab === "predlogi") loadPredlogi();
     if (tab === "log")      loadLog();
-    if (tab === "settings") loadSettings();
+    if (tab === "settings")   loadSettings();
+    if (tab === "izposojene") loadIzposojene();
   }
+
+  document.getElementById("btnRefreshCovers").addEventListener("click", async () => {
+    const btn = document.getElementById("btnRefreshCovers");
+    btn.textContent = "🔄 Iščem..."; btn.disabled = true;
+    // Reset "" (tried but not found) so they get retried
+    allBooksCache.forEach(b => { if (b.naslovnica === "") delete b.naslovnica; });
+    _coverFetchRunning = false;
+    const booksWithoutCover = allBooksCache.filter(b => b.naslovnica === undefined && b.Naslov);
+    if (booksWithoutCover.length === 0) {
+      btn.textContent = "✅ Vse naslovnice so že naložene!";
+      setTimeout(() => { btn.textContent = "🖼 Naslovnice"; btn.disabled = false; }, 2500);
+      return;
+    }
+    await fetchMissingCovers(allBooksCache);
+    btn.textContent = "🖼 Naslovnice"; btn.disabled = false;
+  });
 
   document.getElementById("tabKnjige").addEventListener("click",   () => switchTab("knjige"));
   document.getElementById("tabPredlogi").addEventListener("click", () => switchTab("predlogi"));
   document.getElementById("tabLog").addEventListener("click",      () => switchTab("log"));
-  document.getElementById("tabSettings").addEventListener("click", () => switchTab("settings"));
+  document.getElementById("tabSettings").addEventListener("click",    () => switchTab("settings"));
+  document.getElementById("tabIzposojene").addEventListener("click", () => switchTab("izposojene"));
 
   // ═══════════════════════════════════════════════════════
   //  SUGGEST CHANGE (public FAB)
@@ -2511,6 +2667,8 @@ Knjižnica Samorog 🦄</textarea>
     document.getElementById("suggestBookList").innerHTML = "";
     document.getElementById("suggestSelected").style.display = "none";
     document.getElementById("suggestFields").style.display = "none";
+    document.getElementById("suggestNaslov").value = "";
+    document.getElementById("suggestAvtor").value = "";
     document.getElementById("suggestZvrst").value = "";
     document.getElementById("suggestRazred").value = "";
     document.getElementById("suggestStrani").value = "";
@@ -2560,6 +2718,8 @@ Knjižnica Samorog 🦄</textarea>
     document.getElementById("suggestBookList").style.display = "none";
     document.getElementById("suggestSearch").value = "";
     // Pre-fill current values as placeholders
+    document.getElementById("suggestNaslov").placeholder = `Nov naslov (trenutno: ${suggestSelectedBook.Naslov || "—"})`;
+    document.getElementById("suggestAvtor").placeholder  = `Nov avtor (trenutno: ${suggestSelectedBook.Avtor  || "—"})`;
     document.getElementById("suggestZvrst").placeholder  = `Nova zvrst (trenutno: ${suggestSelectedBook.Zvrst  || "—"})`;
     document.getElementById("suggestRazred").placeholder = `Nov razred (trenutno: ${suggestSelectedBook.Razred || "—"})`;
     document.getElementById("suggestStrani").placeholder = `Novo število strani (trenutno: ${suggestSelectedBook.Strani || "—"})`;
@@ -2568,6 +2728,8 @@ Knjižnica Samorog 🦄</textarea>
 
   document.getElementById("suggestConfirm").addEventListener("click", async () => {
     if (!suggestSelectedBook) return;
+    const naslov = document.getElementById("suggestNaslov").value.trim();
+    const avtor  = document.getElementById("suggestAvtor").value.trim();
     const zvrst  = document.getElementById("suggestZvrst").value.trim();
     const razred = document.getElementById("suggestRazred").value.trim();
     const strani = parseInt(document.getElementById("suggestStrani").value) || 0;
@@ -2579,7 +2741,7 @@ Knjižnica Samorog 🦄</textarea>
       errEl.style.display = "block";
       return;
     }
-    if (!zvrst && !razred && !strani) {
+    if (!naslov && !avtor && !zvrst && !razred && !strani) {
       errEl.textContent = "⚠️ Predlagaj vsaj eno spremembo.";
       errEl.style.display = "block";
       return;
@@ -2589,6 +2751,8 @@ Knjižnica Samorog 🦄</textarea>
     btn.textContent = "Pošiljam..."; btn.disabled = true;
 
     const spremembe = {};
+    if (naslov) spremembe.Naslov = { staro: suggestSelectedBook.Naslov || "", novo: naslov };
+    if (avtor)  spremembe.Avtor  = { staro: suggestSelectedBook.Avtor  || "", novo: avtor };
     if (zvrst)  spremembe.Zvrst  = { staro: suggestSelectedBook.Zvrst  || "", novo: zvrst };
     if (razred) spremembe.Razred = { staro: suggestSelectedBook.Razred || "", novo: razred };
     if (strani) spremembe.Strani = { staro: suggestSelectedBook.Strani || 0,  novo: strani };
@@ -2755,6 +2919,9 @@ Knjižnica Samorog 🦄</textarea>
     zavrni_predlog:  { icon: "❌", label: "Zavrni predlog" },
     dodaj_admina:    { icon: "👤", label: "Dodaj admina" },
     odstrani_admina: { icon: "🗑", label: "Odstrani admina" },
+    nastavitve:      { icon: "⚙️", label: "Nastavitve" },
+    izposoja:        { icon: "📖", label: "Izposoja" },
+    vrnitev:         { icon: "↩️", label: "Vrnitev" },
   };
 
   async function loadLog() {
@@ -3012,11 +3179,319 @@ Knjižnica Samorog 🦄</textarea>
     } catch (e) { console.warn("Email send error:", e); }
   }
 
+  // ═══════════════════════════════════════════════════════
+  //  BOOK COVERS — Google Books API
+  // ═══════════════════════════════════════════════════════
+
+  // Multi-API cover search: Open Library → Google Books → WorldCat
+  async function fetchCoverUrl(naslov, avtor) {
+
+    // ── API 1: Open Library ──────────────────────────────
+    const olQueries = [
+      avtor ? `https://openlibrary.org/search.json?title=${encodeURIComponent(naslov)}&author=${encodeURIComponent(avtor)}&limit=5&fields=cover_i` : null,
+      `https://openlibrary.org/search.json?title=${encodeURIComponent(naslov)}&limit=5&fields=cover_i`,
+      `https://openlibrary.org/search.json?q=${encodeURIComponent(naslov)}&limit=5&fields=cover_i`,
+    ].filter(Boolean);
+
+    for (const url of olQueries) {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) continue;
+        const data = await res.json();
+        for (const d of (data.docs || [])) {
+          if (d.cover_i) return `https://covers.openlibrary.org/b/id/${d.cover_i}-L.jpg`;
+        }
+      } catch (_) {}
+    }
+
+    // ── API 2: Google Books ──────────────────────────────
+    const gbQueries = [
+      avtor ? `intitle:${naslov}+inauthor:${avtor}` : null,
+      `intitle:${naslov}`,
+      `${naslov}${avtor ? "+" + avtor : ""}`,
+    ].filter(Boolean);
+
+    for (const q of gbQueries) {
+      try {
+        const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=5`);
+        if (!res.ok) continue;
+        const data = await res.json();
+        for (const item of (data.items || [])) {
+          const links = item.volumeInfo?.imageLinks;
+          const url = links?.extraLarge || links?.large || links?.medium || links?.small || links?.thumbnail;
+          if (url) return url.replace("http://", "https://").replace(/&edge=curl/g, "");
+        }
+      } catch (_) {}
+    }
+
+    // ── API 3: Open Library — broader search + ISBN covers ──
+    try {
+      const res = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(naslov)}&limit=10&fields=cover_i,isbn`);
+      if (res.ok) {
+        const data = await res.json();
+        for (const d of (data.docs || [])) {
+          if (d.cover_i) return `https://covers.openlibrary.org/b/id/${d.cover_i}-L.jpg`;
+          for (const isbn of (d.isbn || []).slice(0, 3)) {
+            try {
+              const testUrl = `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg?default=false`;
+              const r = await fetch(testUrl, { method: "HEAD" });
+              if (r.ok) return `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`;
+            } catch (_) {}
+          }
+        }
+      }
+    } catch (_) {}
+
+    // ── API 4: Libris (Swedish/Nordic, good for translated EU books) ──
+    try {
+      const res = await fetch(`https://libris.kb.se/xsearch?query=${encodeURIComponent(naslov)}&format=json&n=3`);
+      if (res.ok) {
+        const data = await res.json();
+        for (const item of (data["xsearch"]?.list || [])) {
+          const isbn = item.isbn?.[0];
+          if (isbn) {
+            const url = `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`;
+            try {
+              const r = await fetch(url + "?default=false", { method: "HEAD" });
+              if (r.ok) return url;
+            } catch (_) {}
+          }
+        }
+      }
+    } catch (_) {}
+
+    // ── API 5: Google Books — slovenian language first ────
+    try {
+      const q = encodeURIComponent(`${naslov}${avtor ? " " + avtor : ""}`);
+      const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&langRestrict=sl&maxResults=3`);
+      if (res.ok) {
+        const data = await res.json();
+        for (const item of (data.items || [])) {
+          const links = item.volumeInfo?.imageLinks;
+          const url = links?.extraLarge || links?.large || links?.medium || links?.thumbnail;
+          if (url) return url.replace("http://", "https://").replace(/&edge=curl/g,"");
+        }
+      }
+    } catch (_) {}
+
+    return null;
+  }
+
+  // Fetch cover for a single book and save to Firebase (admin only)
+  async function fetchAndSaveCover(bookId, naslov, avtor) {
+    const url = await fetchCoverUrl(naslov, avtor);
+    // Update local cache immediately so UI updates even before Firebase write
+    const idx = allBooksCache.findIndex(b => b.id === bookId);
+    if (url) {
+      try {
+        await updateDoc(doc(db, "Knjige", bookId), { naslovnica: url });
+      } catch (_) {} // Ignore permission errors on public view
+      if (idx !== -1) allBooksCache[idx].naslovnica = url;
+    } else {
+      // Mark as "tried" so we don't keep retrying — store empty string
+      if (idx !== -1) allBooksCache[idx].naslovnica = "";
+    }
+    return url;
+  }
+
+  // Background fetch — only saves to Firebase if admin is logged in
+  let _coverFetchRunning = false;
+  async function fetchMissingCovers(books) {
+    if (_coverFetchRunning) return;
+    _coverFetchRunning = true;
+    // naslovnica === undefined means never tried; "" means tried but not found
+    const missing = books.filter(b => b.naslovnica === undefined && b.Naslov);
+    if (missing.length === 0) { _coverFetchRunning = false; return; }
+
+    for (let i = 0; i < missing.length; i += 2) {
+      const batch = missing.slice(i, i + 2);
+      await Promise.all(batch.map(b => fetchAndSaveCover(b.id, b.Naslov, b.Avtor)));
+      renderAndFilter();
+      if (i + 2 < missing.length) await new Promise(r => setTimeout(r, 600));
+    }
+    _coverFetchRunning = false;
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  IZPOSOJENE KNJIGE TAB
+  // ═══════════════════════════════════════════════════════
+
+  async function loadIzposojene() {
+    const statusEl = document.getElementById("izposojeneStatusMsg");
+    const listEl   = document.getElementById("izposojeneList");
+    const infoEl   = document.getElementById("izposojeneInfo");
+    statusEl.textContent = "Nalagam...";
+    statusEl.style.display = "block";
+    listEl.innerHTML = "";
+
+    try {
+      // Get all currently borrowed books
+      const snap = await getDocs(collection(db, "Knjige"));
+      const borrowed = [];
+      snap.forEach(d => {
+        const b = { id: d.id, ...d.data() };
+        if (b.izposojeno) borrowed.push(b);
+      });
+
+      // Get user emails
+      const usersSnap = await getDoc(doc(db, "Users", "Users_list"));
+      const usersData = usersSnap.exists() ? usersSnap.data() : {};
+
+      // Build email lookup: name (lowercase) → email
+      const emailMap = {};
+      Object.keys(usersData).forEach(k => {
+        if (k.startsWith("name")) {
+          const num = k.replace("name", "");
+          const mail = usersData["mail" + num];
+          if (mail) emailMap[(usersData[k] || "").toLowerCase()] = mail;
+        }
+      });
+
+      // Get mail sent status from Izposoje collection
+      const izpSnap = await getDocs(collection(db, "Izposoje"));
+      const mailSentMap = {}; // knjigaId → boolean
+      izpSnap.forEach(d => {
+        const data = d.data();
+        if (data.knjigaId && data.mailPoslan) mailSentMap[data.knjigaId] = true;
+      });
+
+      const now = new Date();
+      infoEl.textContent = `${borrowed.length} izposojenih knjig`;
+      statusEl.style.display = "none";
+
+      if (borrowed.length === 0) {
+        listEl.innerHTML = '<div style="text-align:center;padding:3rem;color:#8892a4;">📭 Trenutno ni izposojenih knjig</div>';
+        return;
+      }
+
+      const renderIzposojene = (filter) => {
+        listEl.innerHTML = "";
+        let filtered = borrowed;
+        if (filter === "overdue") filtered = borrowed.filter(b => b.rokVrnitve && new Date(b.rokVrnitve) < now);
+        else if (filter === "soon") filtered = borrowed.filter(b => {
+          if (!b.rokVrnitve) return false;
+          const diff = (new Date(b.rokVrnitve) - now) / 86400000;
+          return diff >= 0 && diff <= 3;
+        });
+        else if (filter === "ok") filtered = borrowed.filter(b => !b.rokVrnitve || new Date(b.rokVrnitve) >= now);
+
+        if (filtered.length === 0) {
+          listEl.innerHTML = '<div style="text-align:center;padding:2rem;color:#8892a4;">Ni zadetkov za ta filter.</div>';
+          return;
+        }
+
+        // Sort: overdue first, then by due date
+        filtered.sort((a, b) => {
+          const da = a.rokVrnitve ? new Date(a.rokVrnitve) : new Date(9999,0,1);
+          const db2 = b.rokVrnitve ? new Date(b.rokVrnitve) : new Date(9999,0,1);
+          return da - db2;
+        });
+
+        filtered.forEach((book, i) => {
+          const email = emailMap[(book.izposoja || "").toLowerCase()] || null;
+          const due   = book.rokVrnitve ? new Date(book.rokVrnitve) : null;
+          const daysLeft = due ? Math.ceil((due - now) / 86400000) : null;
+          const isOverdue = daysLeft !== null && daysLeft < 0;
+          const isSoon    = daysLeft !== null && daysLeft >= 0 && daysLeft <= 3;
+          const mailSent  = mailSentMap[book.id] || false;
+
+          let statusColor = "#6fcf97";
+          let statusText  = daysLeft !== null ? `✅ ${daysLeft} dni do roka` : "Ni roka";
+          if (isOverdue) { statusColor = "#e07070"; statusText = `⚠️ Zamujeno za ${Math.abs(daysLeft)} dni`; }
+          else if (isSoon) { statusColor = "#f59e0b"; statusText = `🔔 Rok čez ${daysLeft} dni`; }
+
+          const row = document.createElement("div");
+          row.style.cssText = `background:var(--admin-card);border:1px solid ${isOverdue ? '#c0392b55' : 'var(--admin-border)'};border-radius:10px;padding:0.9rem 1.1rem;animation:fadeIn 0.2s ease both;animation-delay:${i*0.03}s;`;
+
+          row.innerHTML = `
+            <div style="display:flex;align-items:flex-start;gap:1rem;flex-wrap:wrap;">
+              ${book.naslovnica ? `<img src="${book.naslovnica}" style="width:38px;height:52px;object-fit:contain;border-radius:4px;flex-shrink:0;" onerror="this.style.display='none'">` : ''}
+              <div style="flex:1;min-width:200px;">
+                <div style="font-weight:700;color:#e0e6f0;font-size:0.95rem;">${book.Naslov || '—'}</div>
+                <div style="font-size:0.8rem;color:#8892a4;margin-top:0.2rem;">${book.Avtor || ''}</div>
+              </div>
+              <div style="text-align:right;flex-shrink:0;">
+                <div style="font-size:0.82rem;font-weight:700;color:${statusColor};">${statusText}</div>
+                <div style="font-size:0.75rem;color:#8892a4;margin-top:0.2rem;">${due ? 'Rok: ' + due.toLocaleDateString('sl-SI') : ''}</div>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.5rem;margin-top:0.8rem;padding-top:0.7rem;border-top:1px solid var(--admin-border);">
+              <div style="font-size:0.82rem;">
+                <span style="color:#8892a4;">👤 Izposojevalec:</span>
+                <span style="color:#e0e6f0;margin-left:0.3rem;font-weight:600;">${book.izposoja || '—'}</span>
+              </div>
+              <div style="font-size:0.82rem;">
+                <span style="color:#8892a4;">📧 Email:</span>
+                <span style="color:${email ? '#5b8dee' : '#8892a4'};margin-left:0.3rem;">${email || '— ni shranjen'}</span>
+              </div>
+              <div style="font-size:0.82rem;">
+                <span style="color:#8892a4;">✉️ Mail poslan:</span>
+                <span style="color:${mailSent ? '#6fcf97' : '#8892a4'};margin-left:0.3rem;font-weight:600;">${mailSent ? 'Da' : 'Ne'}</span>
+              </div>
+            </div>
+            ${email ? `
+            <div style="margin-top:0.7rem;">
+              <button class="btn-send-reminder"
+                data-book-id="${book.id}"
+                data-book-title="${(book.Naslov||'').replace(/"/g,'')}"
+                data-to-email="${email}"
+                data-to-name="${(book.izposoja||'').replace(/"/g,'')}"
+                data-due="${book.rokVrnitve || ''}"
+                data-days="${daysLeft ?? ''}"
+                style="background:#1a2035;border:1px solid #5b8dee55;color:#5b8dee;border-radius:8px;padding:0.4rem 1rem;font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer;transition:all 0.15s;">
+                📨 Pošlji opomnik
+              </button>
+            </div>` : ''}
+          `;
+          listEl.appendChild(row);
+        });
+      };
+
+      renderIzposojene(document.getElementById("izposojeneFilter").value);
+      document.getElementById("izposojeneFilter").addEventListener("change", e => renderIzposojene(e.target.value));
+
+    } catch (err) {
+      statusEl.textContent = "❌ Napaka: " + (err.message || err.code);
+    }
+  }
+
+  // Send reminder from Izposojene tab
+  document.getElementById("tabIzposojeneContent").addEventListener("click", async e => {
+    const btn = e.target.closest(".btn-send-reminder");
+    if (!btn) return;
+    btn.textContent = "Pošiljam..."; btn.disabled = true;
+
+    const { bookId, bookTitle, toEmail, toName, due, days } = btn.dataset;
+    const dueDate = due ? new Date(due).toLocaleDateString("sl-SI") : "—";
+
+    try {
+      await sendReminderEmail(toEmail, toName, bookTitle, due || new Date().toISOString());
+      // Mark mail as sent in Izposoje
+      const izpSnap = await getDocs(collection(db, "Izposoje"));
+      for (const d of izpSnap.docs) {
+        if (d.data().knjigaId === bookId) {
+          await updateDoc(doc(db, "Izposoje", d.id), { mailPoslan: true, mailDatum: new Date().toISOString() });
+          break;
+        }
+      }
+      logAction("poslan_mail", `Poslal opomnik: "${bookTitle}" → ${toName} (${toEmail})`);
+      btn.textContent = "✅ Poslan!";
+      btn.style.color = "#6fcf97";
+      btn.style.borderColor = "#6fcf97";
+      setTimeout(() => loadIzposojene(), 1500);
+    } catch (err) {
+      btn.textContent = "❌ Napaka";
+      btn.disabled = false;
+    }
+  });
+
   // ─── Boot ─────────────────────────────────────────────────────────────────
   loadBooks();
   // Load settings on boot (affects borrow modal email field visibility)
   loadSettings();
 </script>
-
+<footer style="text-align:center;padding:2rem 1rem 1.5rem;font-family:'DM Sans',sans-serif;font-size:0.82rem;color:#a09880;letter-spacing:0.03em;">
+  Nik Žlender &amp; Claude 2026
+</footer>
 </body>
 </html>
