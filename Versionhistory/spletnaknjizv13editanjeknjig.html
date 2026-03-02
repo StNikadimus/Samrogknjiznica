@@ -1,0 +1,1883 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Knjižnica Samorog</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f5f0e8;
+      --card: #fffdf7;
+      --accent: #3d6b4f;
+      --accent-light: #e8f2ec;
+      --red: #c0392b;
+      --text: #1a1a1a;
+      --muted: #6b6b6b;
+      --border: #ddd8cc;
+      --shadow: 0 2px 12px rgba(0,0,0,0.08);
+      --admin-bg: #1a1f2e;
+      --admin-card: #242938;
+      --admin-border: #333a4d;
+      --admin-accent: #5b8dee;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       PUBLIC VIEW
+    ═══════════════════════════════════════════════════════ */
+    #publicView { display: block; }
+    #adminView  { display: none;  }
+
+    header {
+      background: var(--accent);
+      color: white;
+      padding: 2rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    header::before {
+      content: '📚';
+      font-size: 8rem;
+      position: absolute;
+      right: -1rem; top: -1rem;
+      opacity: 0.1;
+      pointer-events: none;
+    }
+    header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.4rem;
+      letter-spacing: 0.02em;
+    }
+    header p { margin-top: 0.4rem; opacity: 0.8; font-size: 0.95rem; }
+
+    .search-bar {
+      background: white;
+      padding: 1.2rem 2rem;
+      display: flex;
+      gap: 0.7rem;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .search-bar input {
+      flex: 1; min-width: 200px;
+      padding: 0.7rem 1rem;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-bar input:focus { border-color: var(--accent); }
+
+    .btn {
+      padding: 0.7rem 1.3rem;
+      border: none;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-primary   { background: var(--accent); color: white; }
+    .btn-primary:hover { background: #2f5340; }
+    .btn-secondary { background: var(--accent-light); color: var(--accent); }
+    .btn-secondary:hover { background: #d4e8da; }
+    .btn-borrow {
+      margin-top: 0.5rem;
+      background: var(--accent); color: white;
+      padding: 0.4rem 1rem; font-size: 0.85rem;
+    }
+    .btn-return {
+      margin-top: 0.5rem;
+      background: #f0e6e4; color: var(--red);
+      padding: 0.4rem 1rem; font-size: 0.85rem;
+    }
+    .btn-return:hover { background: #f5d0cc; }
+
+    .page-layout {
+      max-width: 1100px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      display: flex;
+      gap: 1.8rem;
+      align-items: flex-start;
+    }
+
+    /* ── Filter sidebar ───────────────────────────────────── */
+    .filter-sidebar {
+      width: 210px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 76px;
+    }
+
+    .filter-section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.1rem;
+      margin-bottom: 1rem;
+      box-shadow: var(--shadow);
+    }
+
+    .filter-section h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem;
+      color: var(--text);
+      margin-bottom: 0.7rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .filter-chip-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .filter-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0.7rem;
+      border-radius: 8px;
+      border: 1.5px solid transparent;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      background: transparent;
+      transition: all 0.15s;
+      text-align: left;
+      width: 100%;
+    }
+
+    .filter-chip:hover {
+      background: var(--accent-light);
+      border-color: var(--accent-light);
+      color: var(--accent);
+    }
+
+    .filter-chip.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+
+    .filter-chip .chip-count {
+      margin-left: auto;
+      font-size: 0.75rem;
+      opacity: 0.7;
+      background: rgba(0,0,0,0.08);
+      padding: 0.05rem 0.4rem;
+      border-radius: 10px;
+    }
+
+    .filter-chip.active .chip-count {
+      background: rgba(255,255,255,0.25);
+      opacity: 1;
+    }
+
+    .filter-status-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0.7rem;
+      border-radius: 8px;
+      border: 1.5px solid transparent;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 500;
+      background: transparent;
+      transition: all 0.15s;
+      width: 100%;
+      color: var(--text);
+    }
+    .filter-status-chip:hover { background: var(--accent-light); }
+    .filter-status-chip.active-available {
+      background: var(--accent-light);
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .filter-status-chip.active-borrowed {
+      background: #fdecea;
+      border-color: var(--red);
+      color: var(--red);
+      font-weight: 600;
+    }
+
+    .btn-clear-filters {
+      width: 100%;
+      padding: 0.5rem;
+      background: transparent;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-top: 0.3rem;
+    }
+    .btn-clear-filters:hover {
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    @media (max-width: 640px) {
+      .page-layout { flex-direction: column; }
+      .filter-sidebar { width: 100%; position: static; }
+    }
+
+    #resultsTitle {
+      display: none;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+      color: var(--accent);
+    }
+    #statusMsg {
+      text-align: center;
+      padding: 2rem;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+
+    .book-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.2rem;
+    }
+    .book-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.2rem;
+      box-shadow: var(--shadow);
+      transition: transform 0.15s, box-shadow 0.15s;
+      animation: fadeIn 0.3s ease both;
+    }
+    .book-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .book-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+      line-height: 1.3;
+    }
+    .book-title.borrowed { color: var(--red); }
+    .book-meta { font-size: 0.85rem; color: var(--muted); line-height: 1.8; }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.15rem 0.6rem;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      margin-top: 0.3rem;
+    }
+    .status-available { background: var(--accent-light); color: var(--accent); }
+    .status-borrowed  { background: #fdecea; color: var(--red); }
+
+    /* ═══════════════════════════════════════════════════════
+       FAB group
+    ═══════════════════════════════════════════════════════ */
+    .fab-group {
+      position: fixed;
+      bottom: 2rem; right: 2rem;
+      display: flex; flex-direction: column;
+      gap: 0.8rem; align-items: flex-end;
+      z-index: 100;
+    }
+    .fab {
+      width: 58px; height: 58px;
+      border-radius: 50%; border: none;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .fab:hover { transform: scale(1.1); }
+    #fabAdd {
+      background: var(--accent); color: white;
+      font-size: 2rem;
+      box-shadow: 0 4px 20px rgba(61,107,79,0.45);
+    }
+    #fabAdd:hover { box-shadow: 0 6px 28px rgba(61,107,79,0.55); }
+    #fabAdmin {
+      background: #1a1f2e; color: #5b8dee;
+      font-size: 1.3rem; font-family: monospace;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+    }
+    #fabAdmin:hover { box-shadow: 0 6px 28px rgba(0,0,0,0.5); }
+
+    /* ═══════════════════════════════════════════════════════
+       MODALS
+    ═══════════════════════════════════════════════════════ */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 200;
+      backdrop-filter: blur(2px);
+      animation: fadeIn 0.15s ease;
+    }
+    .modal-box {
+      background: var(--card);
+      border-radius: 16px; padding: 2rem;
+      width: 100%; max-width: 420px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      display: flex; flex-direction: column;
+      gap: 0.8rem; margin: 1rem;
+    }
+    .modal-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem; color: var(--accent);
+    }
+    .modal-sub { font-size: 0.9rem; color: var(--muted); margin-top: -0.3rem; }
+    .modal-input {
+      width: 100%; padding: 0.75rem 1rem;
+      border: 1.5px solid var(--border); border-radius: 8px;
+      font-family: 'DM Sans', sans-serif; font-size: 1rem;
+      outline: none; transition: border-color 0.2s; background: white;
+    }
+    .modal-input:focus { border-color: var(--accent); }
+    .modal-error {
+      background: #fdecea; color: var(--red);
+      border-radius: 8px; padding: 0.6rem 1rem; font-size: 0.9rem;
+    }
+    .modal-actions {
+      display: flex; gap: 0.7rem;
+      justify-content: flex-end; margin-top: 0.4rem;
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       ADMIN VIEW (dark)
+    ═══════════════════════════════════════════════════════ */
+    #adminView {
+      background: var(--admin-bg);
+      min-height: 100vh;
+      color: #e0e6f0;
+    }
+    .admin-header {
+      background: #0f1219;
+      padding: 1.5rem 2rem;
+      display: flex; align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--admin-border);
+      flex-wrap: wrap; gap: 1rem;
+    }
+    .admin-header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6rem; color: var(--admin-accent);
+    }
+    .admin-header p { font-size: 0.85rem; color: #8892a4; margin-top: 0.2rem; }
+    #btnExitAdmin {
+      background: #2a2f40; color: #8892a4;
+      border: 1px solid var(--admin-border);
+      padding: 0.5rem 1rem; border-radius: 8px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.9rem;
+      cursor: pointer; transition: all 0.15s;
+    }
+    #btnExitAdmin:hover { background: #333a4d; color: #e0e6f0; }
+
+    .admin-search-bar {
+      background: #0f1219;
+      padding: 1rem 2rem;
+      display: flex; gap: 0.7rem; align-items: center; flex-wrap: wrap;
+      border-bottom: 1px solid var(--admin-border);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .admin-search-bar input {
+      flex: 1; min-width: 200px;
+      padding: 0.7rem 1rem;
+      background: #1a1f2e; border: 1.5px solid var(--admin-border);
+      border-radius: 8px; color: #e0e6f0;
+      font-family: 'DM Sans', sans-serif; font-size: 1rem;
+      outline: none; transition: border-color 0.2s;
+    }
+    .admin-search-bar input:focus { border-color: var(--admin-accent); }
+    .btn-admin-search {
+      background: var(--admin-accent); color: white;
+      padding: 0.7rem 1.3rem; border: none; border-radius: 8px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 600;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .btn-admin-search:hover { background: #4a7de0; }
+    .btn-admin-all {
+      background: #2a2f40; color: #8892a4;
+      border: 1px solid var(--admin-border);
+      padding: 0.7rem 1.3rem; border-radius: 8px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 600;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .btn-admin-all:hover { background: #333a4d; color: #e0e6f0; }
+
+    .admin-main { max-width: 960px; margin: 2rem auto; padding: 0 1.5rem; }
+
+    .admin-stats { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .stat-box {
+      background: var(--admin-card); border: 1px solid var(--admin-border);
+      border-radius: 10px; padding: 0.8rem 1.4rem;
+      font-size: 0.85rem; color: #8892a4;
+    }
+    .stat-box span {
+      display: block; font-size: 1.5rem; font-weight: 700;
+      color: #e0e6f0; margin-bottom: 0.1rem;
+    }
+
+    #adminResultsTitle {
+      display: none;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2rem; color: var(--admin-accent);
+      margin-bottom: 1rem;
+    }
+    #adminStatusMsg { text-align: center; padding: 2rem; color: #8892a4; font-size: 1rem; }
+
+    .admin-book-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.2rem;
+    }
+    .admin-book-card {
+      background: var(--admin-card);
+      border: 1px solid var(--admin-border);
+      border-radius: 12px; padding: 1.2rem;
+      animation: fadeIn 0.3s ease both;
+      transition: border-color 0.15s;
+    }
+    .admin-book-card.is-borrowed { border-color: #c0392b55; }
+    .admin-book-card .book-title { color: #e0e6f0; margin-bottom: 0.4rem; }
+    .admin-book-card .book-title.borrowed { color: #e07070; }
+    .admin-book-card .book-meta { color: #8892a4; }
+
+    .borrower-tag {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      margin-top: 0.7rem;
+      background: #3a1f1f; border: 1px solid #c0392b55;
+      color: #e07070; border-radius: 8px;
+      padding: 0.35rem 0.8rem; font-size: 0.82rem; font-weight: 600;
+    }
+    .borrower-tag.available {
+      background: #1a2e22; border-color: #3d6b4f55; color: #6fcf97;
+    }
+    .btn-delete-book {
+      margin-top: 0.8rem;
+      display: inline-block;
+      background: transparent;
+      border: 1px solid #c0392b55;
+      color: #e07070;
+      border-radius: 6px;
+      padding: 0.3rem 0.8rem;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-delete-book:hover {
+      background: #c0392b;
+      border-color: #c0392b;
+      color: white;
+    }
+    .btn-edit-book {
+      margin-top: 0.8rem;
+      display: inline-block;
+      background: transparent;
+      border: 1px solid #5b8dee55;
+      color: #5b8dee;
+      border-radius: 6px;
+      padding: 0.3rem 0.8rem;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-right: 0.4rem;
+    }
+    .btn-edit-book:hover {
+      background: #5b8dee;
+      border-color: #5b8dee;
+      color: white;
+    }
+    .admin-card-actions {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+      margin-top: 0.5rem;
+    }
+    .admin-profile-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f5f0e8;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.65rem 1rem;
+      gap: 0.5rem;
+    }
+    .admin-profile-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+    .admin-profile-slot {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .btn-delete-admin {
+      background: transparent;
+      border: 1px solid #c0392b55;
+      color: #c0392b;
+      border-radius: 6px;
+      padding: 0.25rem 0.6rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .btn-delete-admin:hover { background: #c0392b; color: white; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════ PUBLIC VIEW ═══════════════════════════════ -->
+<div id="publicView">
+  <header>
+    <h1>🦄 Knjižnica Samorog</h1>
+    <p>Šolska knjižnica — iskanje in izposoja knjig</p>
+  </header>
+
+  <div class="search-bar">
+    <input type="text" id="search" placeholder="Išči po naslovu, avtorju, razredu...">
+    <button class="btn btn-primary"   id="btnSearch">🔍 Išči</button>
+    <button class="btn btn-secondary" id="btnAll">📚 Prikaži vse</button>
+  </div>
+
+  <div class="page-layout">
+    <!-- Filter sidebar -->
+    <aside class="filter-sidebar">
+      <div class="filter-section">
+        <h3>📚 Razred</h3>
+        <div class="filter-chip-list" id="razredFilters">
+          <div style="color:var(--muted);font-size:0.82rem;padding:0.3rem 0;">Nalagam...</div>
+        </div>
+      </div>
+      <div class="filter-section">
+        <h3>📋 Status</h3>
+        <div class="filter-chip-list">
+          <button class="filter-status-chip" id="filterAll">📚 Vse knjige</button>
+          <button class="filter-status-chip" id="filterAvailable">🟢 Na voljo</button>
+          <button class="filter-status-chip" id="filterBorrowed">🔴 Izposojene</button>
+        </div>
+      </div>
+      <button class="btn-clear-filters" id="btnClearFilters">✕ Počisti filtre</button>
+    </aside>
+
+    <!-- Book list -->
+    <main>
+      <div id="resultsTitle"></div>
+      <div id="statusMsg">Nalagam knjige...</div>
+      <div id="bookList" class="book-grid"></div>
+    </main>
+  </div>
+
+  <div class="fab-group">
+    <button class="fab" id="fabAdmin" title="Admin panel (#)">#</button>
+    <button class="fab" id="fabAdd"   title="Dodaj knjigo">+</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ ADMIN VIEW ═══════════════════════════════ -->
+<div id="adminView">
+  <div class="admin-header">
+    <div>
+      <h1>🛡️ Admin Panel</h1>
+      <p id="adminWelcome">Pozdravljen, admin!</p>
+    </div>
+    <div style="display:flex;gap:0.7rem;align-items:center;flex-wrap:wrap;">
+      <button id="btnImportCSV" style="background:#2a2f40;color:#5b8dee;border:1px solid #333a4d;padding:0.5rem 1rem;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;transition:all 0.15s;">📂 Uvozi CSV</button>
+      <button id="btnManageAdmins" style="background:#2a2f40;color:#a78bfa;border:1px solid #3d3560;padding:0.5rem 1rem;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;transition:all 0.15s;">👥 Admini</button>
+      <button id="btnExitAdmin">← Nazaj na knjižnico</button>
+    </div>
+  </div>
+
+  <input type="file" id="csvFileInput" accept=".csv" style="display:none">
+
+  <div class="admin-search-bar">
+    <input type="text" id="adminSearch" placeholder="Išči knjige ali po imenu izposojevalca...">
+    <button class="btn-admin-search" id="btnAdminSearch">🔍 Išči</button>
+    <button class="btn-admin-all"    id="btnAdminAll">📚 Vse knjige</button>
+  </div>
+
+  <div class="admin-main">
+    <div class="admin-stats">
+      <div class="stat-box"><span id="statTotal">—</span>Skupaj knjig</div>
+      <div class="stat-box"><span id="statBorrowed">—</span>Izposojenih</div>
+      <div class="stat-box"><span id="statFree">—</span>Na voljo</div>
+    </div>
+    <div id="adminResultsTitle"></div>
+    <div id="adminStatusMsg">Nalagam...</div>
+    <div id="adminBookList" class="admin-book-grid"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ MODALS ════════════════════════════════════ -->
+
+<!-- Admin check for + button -->
+<div id="adminOverlay" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <h2 class="modal-title">🔐 Preveri identiteto</h2>
+    <p class="modal-sub">Vnesi svoje ime in geslo</p>
+    <input type="text"     id="adminNameInput"     class="modal-input" placeholder="Tvoje ime...">
+    <input type="password" id="adminPasswordInput" class="modal-input" placeholder="Geslo...">
+    <div id="adminError" class="modal-error" style="display:none"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="adminCancel">Prekliči</button>
+      <button class="btn btn-primary"   id="adminConfirm">Potrdi ➜</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add book -->
+<div id="addBookOverlay" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <h2 class="modal-title">📖 Dodaj novo knjigo</h2>
+    <input type="text" id="newNaslov"  class="modal-input" placeholder="Naslov *">
+    <input type="text" id="newAvtor"   class="modal-input" placeholder="Avtor *">
+    <input type="text" id="newLetnica" class="modal-input" placeholder="Letnica">
+    <input type="text" id="newRazred"  class="modal-input" placeholder="Razred">
+    <div id="addBookError" class="modal-error" style="display:none"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="addBookCancel">Prekliči</button>
+      <button class="btn btn-primary"   id="addBookConfirm">✅ Shrani knjigo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Borrow: ask for name -->
+<div id="borrowOverlay" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <h2 class="modal-title">📖 Izposoja knjige</h2>
+    <p class="modal-sub" id="borrowBookTitle"></p>
+    <input type="text" id="borrowNameInput" class="modal-input" placeholder="Tvoje ime in priimek...">
+    <div id="borrowError" class="modal-error" style="display:none"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="borrowCancel">Prekliči</button>
+      <button class="btn btn-primary"   id="borrowConfirm">📖 Izposodi</button>
+    </div>
+  </div>
+</div>
+
+<!-- Return: confirm name -->
+<div id="returnOverlay" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <h2 class="modal-title">↩ Vračilo knjige</h2>
+    <p class="modal-sub" id="returnBookTitle"></p>
+    <input type="text" id="returnNameInput" class="modal-input" placeholder="Vnesi ime s katerim si si izposodil...">
+    <div id="returnError" class="modal-error" style="display:none"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="returnCancel">Prekliči</button>
+      <button class="btn btn-primary"   id="returnConfirm">↩ Vrni knjigo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Admin login for # button -->
+<div id="adminLoginOverlay" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <h2 class="modal-title">🛡️ Admin prijava</h2>
+    <p class="modal-sub">Vnesi svoje ime in geslo</p>
+    <input type="text"     id="adminLoginInput"    class="modal-input" placeholder="Tvoje ime...">
+    <input type="password" id="adminLoginPassword" class="modal-input" placeholder="Geslo...">
+    <div id="adminLoginError" class="modal-error" style="display:none"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="adminLoginCancel">Prekliči</button>
+      <button class="btn btn-primary"   id="adminLoginConfirm">Vstopi ➜</button>
+    </div>
+  </div>
+</div>
+
+<!-- CSV Instructions modal -->
+<div id="csvInstructionsOverlay" class="modal-overlay" style="display:none">
+  <div class="modal-box" style="max-width:520px;">
+    <h2 class="modal-title">📂 Uvoz knjig iz CSV</h2>
+    <p class="modal-sub">Preden uvozišč, se prepričaj da je tvoja CSV datoteka pravilno oblikovana:</p>
+
+    <div style="background:#f0ebe0;border-radius:10px;padding:1rem 1.2rem;font-size:0.88rem;line-height:1.9;">
+      <div><b>1. Izvozi iz Excela kot CSV</b><br>
+      <span style="color:var(--muted)">File → Save As → <i>CSV UTF-8 (Comma delimited)</i></span></div>
+
+      <div style="margin-top:0.8rem;"><b>2. Prva vrstica mora biti glava stolpcev:</b><br>
+      <code style="background:white;padding:0.2rem 0.5rem;border-radius:4px;font-size:0.85rem;">Naslov, Avtor, Letnica, Razred</code></div>
+
+      <div style="margin-top:0.8rem;"><b>3. Primer pravilne CSV datoteke:</b></div>
+      <table style="width:100%;border-collapse:collapse;margin-top:0.4rem;background:white;border-radius:6px;overflow:hidden;font-size:0.82rem;">
+        <thead>
+          <tr style="background:#3d6b4f;color:white;">
+            <th style="padding:0.3rem 0.6rem;text-align:left;">Naslov</th>
+            <th style="padding:0.3rem 0.6rem;text-align:left;">Avtor</th>
+            <th style="padding:0.3rem 0.6rem;text-align:left;">Letnica</th>
+            <th style="padding:0.3rem 0.6rem;text-align:left;">Razred</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid #eee;">
+            <td style="padding:0.3rem 0.6rem;">Mali princ</td>
+            <td style="padding:0.3rem 0.6rem;">Antoine de Saint-Exupéry</td>
+            <td style="padding:0.3rem 0.6rem;">1943</td>
+            <td style="padding:0.3rem 0.6rem;">4–6</td>
+          </tr>
+          <tr>
+            <td style="padding:0.3rem 0.6rem;">Harry Potter</td>
+            <td style="padding:0.3rem 0.6rem;">J.K. Rowling</td>
+            <td style="padding:0.3rem 0.6rem;">1997</td>
+            <td style="padding:0.3rem 0.6rem;">6–9</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div style="margin-top:0.8rem;color:var(--muted);">
+        ✅ Imena stolpcev niso občutljiva na velika/mala črka<br>
+        ✅ Podprti ločili: vejica <code>,</code> in podpičje <code>;</code><br>
+        ✅ Polje Letnica in Razred nista obvezni
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="csvInstructionsCancel">Prekliči</button>
+      <button class="btn btn-primary" id="csvInstructionsNext">Uvozi datoteko ➜</button>
+    </div>
+  </div>
+</div>
+
+<!-- CSV Import modal -->
+<div id="csvOverlay" class="modal-overlay" style="display:none">
+  <div class="modal-box" style="max-width:600px;">
+    <h2 class="modal-title">📂 Uvozi knjige iz CSV</h2>
+    <p class="modal-sub" id="csvPreviewInfo"></p>
+    <div id="csvPreviewTable" style="max-height:260px;overflow-y:auto;margin:0.3rem 0;border:1px solid var(--border);border-radius:8px;font-size:0.82rem;"></div>
+    <div id="csvError" class="modal-error" style="display:none"></div>
+    <div id="csvProgress" style="display:none;font-size:0.9rem;color:var(--muted);text-align:center;padding:0.5rem 0;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="csvCancel">Prekliči</button>
+      <button class="btn btn-primary" id="csvConfirm">✅ Uvozi vse v Firebase</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit book modal -->
+<div id="editBookOverlay" class="modal-overlay" style="display:none">
+  <div class="modal-box" style="max-width:440px;">
+    <h2 class="modal-title" style="color:#5b8dee;">✏️ Uredi knjigo</h2>
+    <p class="modal-sub" id="editBookSubtitle"></p>
+    <input type="text" id="editNaslov"  class="modal-input" placeholder="Naslov *">
+    <input type="text" id="editAvtor"   class="modal-input" placeholder="Avtor *">
+    <input type="text" id="editLetnica" class="modal-input" placeholder="Letnica">
+    <input type="text" id="editRazred"  class="modal-input" placeholder="Razred">
+    <div id="editBookError" class="modal-error" style="display:none"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="editBookCancel">Prekliči</button>
+      <button class="btn btn-primary" id="editBookConfirm" style="background:#5b8dee;">💾 Shrani spremembe</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete confirm modal -->
+<div id="deleteOverlay" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <h2 class="modal-title" style="color:var(--red)">🗑 Izbriši knjigo</h2>
+    <p class="modal-sub" id="deleteBookTitle"></p>
+    <p style="font-size:0.9rem;color:var(--muted)">Te akcije ni mogoče razveljaviti. Knjiga bo trajno izbrisana iz sistema.</p>
+    <div id="deleteError" class="modal-error" style="display:none"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="deleteCancel">Prekliči</button>
+      <button class="btn" id="deleteConfirm" style="background:#c0392b;color:white;">🗑 Da, izbriši</button>
+    </div>
+  </div>
+</div>
+
+<!-- Manage admins modal -->
+<div id="manageAdminsOverlay" class="modal-overlay" style="display:none">
+  <div class="modal-box" style="max-width:500px;">
+    <h2 class="modal-title" style="color:#a78bfa;">👥 Upravljanje adminov</h2>
+    <div id="adminListContainer" style="max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:0.5rem;margin:0.3rem 0;"></div>
+    <div id="adminListStatus" style="color:#8892a4;font-size:0.9rem;text-align:center;padding:0.5rem;"></div>
+    <div style="border-top:1px solid var(--border);margin-top:0.5rem;padding-top:0.8rem;display:flex;gap:0.7rem;justify-content:space-between;align-items:center;flex-wrap:wrap;">
+      <button class="btn btn-secondary" id="manageAdminsClose" style="background:#f0ebe0;">Zapri</button>
+      <button class="btn btn-primary" id="btnShowAddAdmin" style="background:#7c3aed;">+ Dodaj admina</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add admin modal -->
+<div id="addAdminOverlay" class="modal-overlay" style="display:none">
+  <div class="modal-box" style="max-width:420px;">
+    <h2 class="modal-title" style="color:#a78bfa;">➕ Dodaj admina</h2>
+    <p class="modal-sub">Novi admin bo dodan v Firebase</p>
+    <input type="text"     id="newAdminName"     class="modal-input" placeholder="Ime admina *">
+    <input type="password" id="newAdminPassword" class="modal-input" placeholder="Geslo *">
+    <div id="addAdminError" class="modal-error" style="display:none"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="addAdminCancel">← Nazaj</button>
+      <button class="btn btn-primary"   id="addAdminConfirm" style="background:#7c3aed;">✅ Dodaj admina</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ SCRIPT ════════════════════════════════════ -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, getDocs, updateDoc, doc, getDoc, addDoc, deleteDoc }
+    from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyD4IM7enkpAWUuu__82NfZtbDqoQJpDTcU",
+    authDomain: "samorogknjiznica.firebaseapp.com",
+    projectId: "samorogknjiznica",
+    storageBucket: "samorogknjiznica.firebasestorage.app",
+    messagingSenderId: "1036131542702",
+    appId: "1:1036131542702:web:14262569c8456c91b86f3f"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
+
+  let pendingBorrowId    = null;
+  let pendingBorrowTitle = "";
+
+  // ─── Check admin name against Firestore ───────────────────────────────────
+  async function checkAdmin(name, password) {
+    const adminDoc = await getDoc(doc(db, "Admin", "Admin_list"));
+    if (!adminDoc.exists()) throw new Error("Admin dokument ne obstaja.");
+    const data = adminDoc.data();
+    // Find which adminN field matches the name
+    const n = name.trim().toLowerCase();
+    const p = password.trim();
+    let matched = false;
+    // data has admin1, admin2... and password1, password2...
+    // find the index where adminX matches name, then check passwordX
+    const keys = Object.keys(data);
+    for (const key of keys) {
+      if (key.startsWith("admin") && data[key].toString().trim().toLowerCase() === n) {
+        const num = key.replace("admin", "");
+        const pwKey = "password" + num;
+        if (data[pwKey] && data[pwKey].toString().trim() === p) {
+          matched = true;
+        }
+        break; // found the name, stop regardless
+      }
+    }
+    return matched;
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  PUBLIC VIEW
+  // ═══════════════════════════════════════════════════════
+
+  // ── Filter state ──────────────────────────────────────────────────────────
+  let activeRazred = null;   // null = vse, or a razred string
+  let activeStatus = "all";  // "all" | "available" | "borrowed"
+  let allBooksCache = [];    // full unfiltered list from Firebase
+
+  function applyFilters(books) {
+    let result = books;
+    if (activeRazred) {
+      result = result.filter(b => (b.Razred || "").toString() === activeRazred);
+    }
+    if (activeStatus === "available") {
+      result = result.filter(b => !b.izposojeno);
+    } else if (activeStatus === "borrowed") {
+      result = result.filter(b => b.izposojeno);
+    }
+    return result;
+  }
+
+  function buildRazredChips(books) {
+    const container = document.getElementById("razredFilters");
+    // Count books per razred
+    const counts = {};
+    books.forEach(b => {
+      const r = (b.Razred || "").toString().trim();
+      if (r) counts[r] = (counts[r] || 0) + 1;
+    });
+    const razredi = Object.keys(counts).sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
+
+    if (razredi.length === 0) {
+      container.innerHTML = '<div style="color:var(--muted);font-size:0.82rem;padding:0.3rem 0;">Ni razredov</div>';
+      return;
+    }
+
+    container.innerHTML = "";
+    razredi.forEach(r => {
+      const btn = document.createElement("button");
+      btn.className = "filter-chip" + (activeRazred === r ? " active" : "");
+      btn.dataset.razred = r;
+      btn.innerHTML = `<span>${r}</span><span class="chip-count">${counts[r]}</span>`;
+      container.appendChild(btn);
+    });
+  }
+
+  function updateFilterUI() {
+    // Razred chips
+    document.querySelectorAll(".filter-chip").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.razred === activeRazred);
+    });
+    // Status chips
+    document.getElementById("filterAll").className       = "filter-status-chip" + (activeStatus === "all"       ? " active-available" : "");
+    document.getElementById("filterAvailable").className = "filter-status-chip" + (activeStatus === "available" ? " active-available" : "");
+    document.getElementById("filterBorrowed").className  = "filter-status-chip" + (activeStatus === "borrowed"  ? " active-borrowed"  : "");
+  }
+
+  function renderAndFilter() {
+    const filtered = applyFilters(allBooksCache);
+    const q = document.getElementById("search").value.trim().toLowerCase();
+    const searched = q ? filtered.filter(b =>
+      (b.Naslov  && b.Naslov.toLowerCase().includes(q))  ||
+      (b.Avtor   && b.Avtor.toLowerCase().includes(q))   ||
+      (b.Razred  && b.Razred.toString().toLowerCase().includes(q)) ||
+      (b.Letnica && b.Letnica.toString().includes(q))
+    ) : filtered;
+
+    // Update results title
+    const title = document.getElementById("resultsTitle");
+    const parts = [];
+    if (q) parts.push(`"${q}"`);
+    if (activeRazred) parts.push(`Razred: ${activeRazred}`);
+    if (activeStatus !== "all") parts.push(activeStatus === "available" ? "Na voljo" : "Izposojene");
+    if (parts.length > 0) {
+      title.style.display = "block";
+      title.textContent = "Filtri: " + parts.join(" · ");
+    } else {
+      title.style.display = "none";
+    }
+
+    updateFilterUI();
+    renderBooks(searched);
+  }
+
+  // Filter sidebar click handlers
+  document.getElementById("razredFilters").addEventListener("click", e => {
+    const chip = e.target.closest(".filter-chip");
+    if (!chip) return;
+    const r = chip.dataset.razred;
+    activeRazred = (activeRazred === r) ? null : r; // toggle
+    renderAndFilter();
+  });
+
+  document.getElementById("filterAll").addEventListener("click",       () => { activeStatus = "all";       renderAndFilter(); });
+  document.getElementById("filterAvailable").addEventListener("click", () => { activeStatus = "available"; renderAndFilter(); });
+  document.getElementById("filterBorrowed").addEventListener("click",  () => { activeStatus = "borrowed";  renderAndFilter(); });
+
+  document.getElementById("btnClearFilters").addEventListener("click", () => {
+    activeRazred = null;
+    activeStatus = "all";
+    document.getElementById("search").value = "";
+    renderAndFilter();
+  });
+
+  function renderBooks(books) {
+    const list   = document.getElementById("bookList");
+    const status = document.getElementById("statusMsg");
+    list.innerHTML = "";
+    if (books.length === 0) {
+      status.style.display = "block";
+      status.textContent = "Ni rezultatov za izbrane filtre.";
+      return;
+    }
+    status.style.display = "none";
+    books.forEach((book, i) => {
+      const div = document.createElement("div");
+      div.className = "book-card";
+      div.style.animationDelay = `${i * 0.04}s`;
+      div.innerHTML = `
+        <div class="book-title ${book.izposojeno ? 'borrowed' : ''}">${book.Naslov || '—'}</div>
+        <div class="book-meta">
+          <div>✍️ ${book.Avtor || '—'}</div>
+          <div>📅 ${book.Letnica || '—'}</div>
+          <div>🏫 Razred: ${book.Razred || '—'}</div>
+        </div>
+        <span class="status-badge ${book.izposojeno ? 'status-borrowed' : 'status-available'}">
+          ${book.izposojeno ? '🔴 Izposojena' : '🟢 Na voljo'}
+        </span><br>
+        <button class="btn ${book.izposojeno ? 'btn-return' : 'btn-borrow'}"
+                data-id="${book.id}"
+                data-izposojeno="${book.izposojeno}"
+                data-naslov="${book.Naslov || ''}"
+                data-izposoja="${book.izposoja || ''}"
+                >
+          ${book.izposojeno ? '↩ Vrni' : '📖 Izposodi'}
+        </button>
+      `;
+      list.appendChild(div);
+    });
+  }
+
+  async function loadBooks() {
+    const status = document.getElementById("statusMsg");
+    status.style.display = "block";
+    status.textContent = "Nalagam knjige...";
+    document.getElementById("bookList").innerHTML = "";
+    try {
+      const snapshot = await getDocs(collection(db, "Knjige"));
+      let books = [];
+      snapshot.forEach(d => books.push({ id: d.id, ...d.data() }));
+      books.sort((a, b) => (a.Naslov || "").localeCompare(b.Naslov || ""));
+      allBooksCache = books;
+      buildRazredChips(books);
+      renderAndFilter();
+    } catch (err) {
+      console.error("🔴 Firebase error:", err);
+      let hint = "";
+      if (err.code === "permission-denied") {
+        hint = "<br><br>🔒 <b>Firestore pravila blokirajo dostop.</b><br>Pojdi: Firebase Console → Firestore → Rules → nastavi <code>allow read, write: if true;</code>";
+      } else if (err.code === "unavailable" || err.message?.includes("network")) {
+        hint = "<br><br>🌐 <b>Problem z omrežjem.</b> Preveri internetno povezavo.";
+      } else if (err.code === "failed-precondition") {
+        hint = "<br><br>⚙️ <b>Firestore ni omogočen.</b> Pojdi v Firebase Console in aktiviraj Firestore Database.";
+      } else {
+        hint = `<br><br>Odpri <b>F12 → Console</b> za več podrobnosti.<br><code style="font-size:0.75rem">${err.code || err.message}</code>`;
+      }
+      status.innerHTML = `❌ <strong>Napaka pri nalaganju</strong>${hint}`;
+    }
+  }
+
+  async function searchBooks() {
+    // If cache is empty, load first
+    if (allBooksCache.length === 0) await loadBooks();
+    else renderAndFilter();
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  BORROW / RETURN
+  // ═══════════════════════════════════════════════════════
+
+  let pendingReturnId    = null;
+  let pendingReturnName  = "";  // the name stored in Firebase for this book
+
+  function openBorrowModal(id, naslov) {
+    pendingBorrowId    = id;
+    pendingBorrowTitle = naslov;
+    document.getElementById("borrowBookTitle").textContent = `Knjiga: "${naslov}"`;
+    document.getElementById("borrowNameInput").value = "";
+    document.getElementById("borrowError").style.display = "none";
+    document.getElementById("borrowOverlay").style.display = "flex";
+    setTimeout(() => document.getElementById("borrowNameInput").focus(), 50);
+  }
+
+  function openReturnModal(id, naslov, izposoja) {
+    pendingReturnId   = id;
+    pendingReturnName = izposoja || "";
+    document.getElementById("returnBookTitle").textContent = `Knjiga: "${naslov}"`;
+    document.getElementById("returnNameInput").value = "";
+    document.getElementById("returnError").style.display = "none";
+    document.getElementById("returnOverlay").style.display = "flex";
+    setTimeout(() => document.getElementById("returnNameInput").focus(), 50);
+  }
+
+  document.getElementById("bookList").addEventListener("click", e => {
+    const btn = e.target.closest("button[data-id]");
+    if (!btn) return;
+    const id         = btn.dataset.id;
+    const izposojeno = btn.dataset.izposojeno === "true";
+    const naslov     = btn.dataset.naslov   || "knjiga";
+    const izposoja   = btn.dataset.izposoja || "";
+    if (izposojeno) {
+      openReturnModal(id, naslov, izposoja);
+    } else {
+      openBorrowModal(id, naslov);
+    }
+  });
+
+  // ── Borrow confirm ──────────────────────────────────────────────────────────
+  document.getElementById("borrowCancel").addEventListener("click", () => {
+    document.getElementById("borrowOverlay").style.display = "none";
+  });
+  document.getElementById("borrowNameInput").addEventListener("keydown", e => {
+    if (e.key === "Enter") document.getElementById("borrowConfirm").click();
+  });
+  document.getElementById("borrowConfirm").addEventListener("click", async () => {
+    const name  = document.getElementById("borrowNameInput").value.trim();
+    const errEl = document.getElementById("borrowError");
+    if (!name) {
+      errEl.textContent = "⚠️ Vnesi svoje ime.";
+      errEl.style.display = "block";
+      return;
+    }
+    const btn = document.getElementById("borrowConfirm");
+    btn.textContent = "Shranjujem..."; btn.disabled = true;
+    try {
+      await updateDoc(doc(db, "Knjige", pendingBorrowId), {
+        izposojeno: true,
+        izposoja:   name
+      });
+      document.getElementById("borrowOverlay").style.display = "none";
+      // Update local cache entry so we don't need a full Firebase reload
+      const idx = allBooksCache.findIndex(b => b.id === pendingBorrowId);
+      if (idx !== -1) { allBooksCache[idx].izposojeno = true; allBooksCache[idx].izposoja = name; }
+      buildRazredChips(allBooksCache);
+      renderAndFilter();
+    } catch (err) {
+      errEl.textContent = "❌ Napaka: " + (err.message || err.code);
+      errEl.style.display = "block";
+    }
+    btn.textContent = "📖 Izposodi"; btn.disabled = false;
+  });
+
+  // ── Return confirm ──────────────────────────────────────────────────────────
+  document.getElementById("returnCancel").addEventListener("click", () => {
+    document.getElementById("returnOverlay").style.display = "none";
+  });
+  document.getElementById("returnNameInput").addEventListener("keydown", e => {
+    if (e.key === "Enter") document.getElementById("returnConfirm").click();
+  });
+  document.getElementById("returnConfirm").addEventListener("click", async () => {
+    const name  = document.getElementById("returnNameInput").value.trim();
+    const errEl = document.getElementById("returnError");
+    if (!name) {
+      errEl.textContent = "⚠️ Vnesi svoje ime.";
+      errEl.style.display = "block";
+      return;
+    }
+    // Case-insensitive match against stored borrower name
+    if (name.toLowerCase() !== pendingReturnName.toLowerCase()) {
+      errEl.textContent = "🚫 Ime se ne ujema. Vnesi isto ime kot ob izposoji.";
+      errEl.style.display = "block";
+      return;
+    }
+    const btn = document.getElementById("returnConfirm");
+    btn.textContent = "Vračam..."; btn.disabled = true;
+    try {
+      await updateDoc(doc(db, "Knjige", pendingReturnId), {
+        izposojeno: false,
+        izposoja:   ""
+      });
+      document.getElementById("returnOverlay").style.display = "none";
+      const ridx = allBooksCache.findIndex(b => b.id === pendingReturnId);
+      if (ridx !== -1) { allBooksCache[ridx].izposojeno = false; allBooksCache[ridx].izposoja = ""; }
+      buildRazredChips(allBooksCache);
+      renderAndFilter();
+    } catch (err) {
+      errEl.textContent = "❌ Napaka: " + (err.message || err.code);
+      errEl.style.display = "block";
+    }
+    btn.textContent = "↩ Vrni knjigo"; btn.disabled = false;
+  });
+
+  // ═══════════════════════════════════════════════════════
+  //  ADMIN VIEW
+  // ═══════════════════════════════════════════════════════
+
+  function renderAdminBooks(books) {
+    const list   = document.getElementById("adminBookList");
+    const status = document.getElementById("adminStatusMsg");
+    list.innerHTML = "";
+    const borrowed = books.filter(b => b.izposojeno).length;
+    document.getElementById("statTotal").textContent    = books.length;
+    document.getElementById("statBorrowed").textContent = borrowed;
+    document.getElementById("statFree").textContent     = books.length - borrowed;
+    if (books.length === 0) {
+      status.style.display = "block";
+      status.textContent = "Ni rezultatov.";
+      return;
+    }
+    status.style.display = "none";
+    books.forEach((book, i) => {
+      const div = document.createElement("div");
+      div.className = `admin-book-card ${book.izposojeno ? 'is-borrowed' : ''}`;
+      div.style.animationDelay = `${i * 0.03}s`;
+      const borrowerHtml = book.izposojeno
+        ? `<div class="borrower-tag">👤 ${book.izposoja || 'Neznano'}</div>`
+        : `<div class="borrower-tag available">✅ Na voljo</div>`;
+      div.innerHTML = `
+        <div class="book-title ${book.izposojeno ? 'borrowed' : ''}">${book.Naslov || '—'}</div>
+        <div class="book-meta">
+          <div>✍️ ${book.Avtor || '—'}</div>
+          <div>📅 ${book.Letnica || '—'} &nbsp;|&nbsp; 🏫 ${book.Razred || '—'}</div>
+        </div>
+        ${borrowerHtml}
+        <div class="admin-card-actions">
+          <button class="btn-edit-book"
+                  data-edit-id="${book.id}"
+                  data-edit-naslov="${book.Naslov || ''}"
+                  data-edit-avtor="${book.Avtor || ''}"
+                  data-edit-letnica="${book.Letnica || ''}"
+                  data-edit-razred="${book.Razred || ''}">
+            ✏️ Uredi
+          </button>
+          <button class="btn-delete-book" data-del-id="${book.id}" data-del-naslov="${book.Naslov || ''}">
+            🗑 Izbriši
+          </button>
+        </div>
+      `;
+      list.appendChild(div);
+    });
+  }
+
+  async function loadAdminBooks() {
+    const status = document.getElementById("adminStatusMsg");
+    const title  = document.getElementById("adminResultsTitle");
+    title.style.display = "none";
+    status.style.display = "block";
+    status.textContent = "Nalagam...";
+    document.getElementById("adminBookList").innerHTML = "";
+    try {
+      const snapshot = await getDocs(collection(db, "Knjige"));
+      let books = [];
+      snapshot.forEach(d => books.push({ id: d.id, ...d.data() }));
+      // Borrowed books first, then alphabetical
+      books.sort((a, b) => {
+        if (a.izposojeno && !b.izposojeno) return -1;
+        if (!a.izposojeno && b.izposojeno) return 1;
+        return (a.Naslov || "").localeCompare(b.Naslov || "");
+      });
+      renderAdminBooks(books);
+    } catch (err) {
+      console.error(err);
+      status.textContent = "❌ Napaka: " + (err.code || err.message);
+    }
+  }
+
+  async function searchAdminBooks() {
+    const q = document.getElementById("adminSearch").value.trim().toLowerCase();
+    if (!q) { loadAdminBooks(); return; }
+    const title  = document.getElementById("adminResultsTitle");
+    const status = document.getElementById("adminStatusMsg");
+    title.style.display = "block";
+    title.textContent = `Rezultati za: "${q}"`;
+    status.style.display = "block";
+    status.textContent = "Iščem...";
+    document.getElementById("adminBookList").innerHTML = "";
+    try {
+      const snapshot = await getDocs(collection(db, "Knjige"));
+      let books = [];
+      snapshot.forEach(d => books.push({ id: d.id, ...d.data() }));
+      const filtered = books.filter(b =>
+        (b.Naslov   && b.Naslov.toLowerCase().includes(q))    ||
+        (b.Avtor    && b.Avtor.toLowerCase().includes(q))     ||
+        (b.Razred   && b.Razred.toString().toLowerCase().includes(q)) ||
+        (b.Letnica  && b.Letnica.toString().includes(q))      ||
+        (b.izposoja && b.izposoja.toLowerCase().includes(q))  // search by borrower!
+      );
+      filtered.sort((a, b) => (a.Naslov || "").localeCompare(b.Naslov || ""));
+      renderAdminBooks(filtered);
+    } catch (err) {
+      console.error(err);
+      status.textContent = "❌ Napaka pri iskanju.";
+    }
+  }
+
+  function showAdminView(adminName) {
+    document.getElementById("adminWelcome").textContent = `Pozdravljen, ${adminName}! 👋`;
+    document.getElementById("publicView").style.display = "none";
+    document.getElementById("adminView").style.display  = "block";
+    document.getElementById("adminSearch").value = "";
+    loadAdminBooks();
+  }
+
+  function showPublicView() {
+    document.getElementById("adminView").style.display  = "none";
+    document.getElementById("publicView").style.display = "block";
+  }
+
+  document.getElementById("btnAdminSearch").addEventListener("click", searchAdminBooks);
+  document.getElementById("btnAdminAll").addEventListener("click", loadAdminBooks);
+  document.getElementById("adminSearch").addEventListener("keydown", e => {
+    if (e.key === "Enter") searchAdminBooks();
+  });
+  document.getElementById("btnExitAdmin").addEventListener("click", () => { window.location.reload(); });
+
+  // ─── FAB # → admin login ──────────────────────────────────────────────────
+  document.getElementById("fabAdmin").addEventListener("click", () => {
+    document.getElementById("adminLoginInput").value = "";
+    document.getElementById("adminLoginPassword").value = "";
+    document.getElementById("adminLoginError").style.display = "none";
+    document.getElementById("adminLoginOverlay").style.display = "flex";
+    setTimeout(() => document.getElementById("adminLoginInput").focus(), 50);
+  });
+  document.getElementById("adminLoginCancel").addEventListener("click", () => {
+    document.getElementById("adminLoginOverlay").style.display = "none";
+  });
+  document.getElementById("adminLoginInput").addEventListener("keydown", e => {
+    if (e.key === "Enter") document.getElementById("adminLoginConfirm").click();
+  });
+  document.getElementById("adminLoginPassword").addEventListener("keydown", e => {
+    if (e.key === "Enter") document.getElementById("adminLoginConfirm").click();
+  });
+
+  document.getElementById("adminLoginConfirm").addEventListener("click", async () => {
+    const name     = document.getElementById("adminLoginInput").value.trim();
+    const password = document.getElementById("adminLoginPassword").value.trim();
+    const errEl    = document.getElementById("adminLoginError");
+    if (!name || !password) {
+      errEl.textContent = "⚠️ Vnesi ime in geslo.";
+      errEl.style.display = "block";
+      return;
+    }
+    const btn = document.getElementById("adminLoginConfirm");
+    btn.textContent = "Preverjam..."; btn.disabled = true;
+    try {
+      const ok = await checkAdmin(name, password);
+      if (!ok) {
+        errEl.textContent = "🚫 Napačno ime ali geslo.";
+        errEl.style.display = "block";
+      } else {
+        document.getElementById("adminLoginOverlay").style.display = "none";
+        showAdminView(name);
+      }
+    } catch (err) {
+      errEl.textContent = "❌ Napaka: " + (err.message || err.code);
+      errEl.style.display = "block";
+    }
+    btn.textContent = "Vstopi ➜"; btn.disabled = false;
+  });
+
+  // ─── FAB + → add book ─────────────────────────────────────────────────────
+  document.getElementById("fabAdd").addEventListener("click", () => {
+    document.getElementById("adminNameInput").value = "";
+    document.getElementById("adminPasswordInput").value = "";
+    document.getElementById("adminError").style.display = "none";
+    document.getElementById("adminOverlay").style.display = "flex";
+    setTimeout(() => document.getElementById("adminNameInput").focus(), 50);
+  });
+  document.getElementById("adminCancel").addEventListener("click", () => {
+    document.getElementById("adminOverlay").style.display = "none";
+  });
+  document.getElementById("adminNameInput").addEventListener("keydown", e => {
+    if (e.key === "Enter") document.getElementById("adminConfirm").click();
+  });
+  document.getElementById("adminPasswordInput").addEventListener("keydown", e => {
+    if (e.key === "Enter") document.getElementById("adminConfirm").click();
+  });
+
+  document.getElementById("adminConfirm").addEventListener("click", async () => {
+    const name     = document.getElementById("adminNameInput").value.trim();
+    const password = document.getElementById("adminPasswordInput").value.trim();
+    const errEl    = document.getElementById("adminError");
+    if (!name || !password) {
+      errEl.textContent = "⚠️ Vnesi ime in geslo.";
+      errEl.style.display = "block";
+      return;
+    }
+    const btn = document.getElementById("adminConfirm");
+    btn.textContent = "Preverjam..."; btn.disabled = true;
+    try {
+      const ok = await checkAdmin(name, password);
+      if (!ok) {
+        errEl.textContent = "🚫 Napačno ime ali geslo.";
+        errEl.style.display = "block";
+      } else {
+        document.getElementById("adminOverlay").style.display = "none";
+        ["newNaslov","newAvtor","newLetnica","newRazred"].forEach(id => {
+          document.getElementById(id).value = "";
+        });
+        document.getElementById("addBookError").style.display = "none";
+        document.getElementById("addBookOverlay").style.display = "flex";
+        setTimeout(() => document.getElementById("newNaslov").focus(), 50);
+      }
+    } catch (err) {
+      errEl.textContent = "❌ Napaka: " + (err.message || err.code);
+      errEl.style.display = "block";
+    }
+    btn.textContent = "Potrdi ➜"; btn.disabled = false;
+  });
+  document.getElementById("addBookCancel").addEventListener("click", () => {
+    document.getElementById("addBookOverlay").style.display = "none";
+  });
+  document.getElementById("addBookConfirm").addEventListener("click", async () => {
+    const naslov  = document.getElementById("newNaslov").value.trim();
+    const avtor   = document.getElementById("newAvtor").value.trim();
+    const letnica = document.getElementById("newLetnica").value.trim();
+    const razred  = document.getElementById("newRazred").value.trim();
+    const errEl   = document.getElementById("addBookError");
+    if (!naslov || !avtor) {
+      errEl.textContent = "⚠️ Naslov in avtor sta obvezna.";
+      errEl.style.display = "block";
+      return;
+    }
+    const btn = document.getElementById("addBookConfirm");
+    btn.textContent = "Shranjujem..."; btn.disabled = true;
+    try {
+      await addDoc(collection(db, "Knjige"), {
+        Naslov:     naslov,
+        Avtor:      avtor,
+        Letnica:    letnica || "",
+        Razred:     razred  || "",
+        izposojeno: false,
+        izposoja:   ""   // ← always initialised empty
+      });
+      document.getElementById("addBookOverlay").style.display = "none";
+      loadBooks();
+    } catch (err) {
+      errEl.textContent = "❌ Napaka: " + (err.message || err.code);
+      errEl.style.display = "block";
+    }
+    btn.textContent = "✅ Shrani knjigo"; btn.disabled = false;
+  });
+
+  // ─── CSV Import ───────────────────────────────────────────────────────────────
+  let csvParsedBooks = [];
+
+  document.getElementById("btnImportCSV").addEventListener("click", () => {
+    document.getElementById("csvInstructionsOverlay").style.display = "flex";
+  });
+
+  document.getElementById("csvInstructionsCancel").addEventListener("click", () => {
+    document.getElementById("csvInstructionsOverlay").style.display = "none";
+  });
+
+  document.getElementById("csvInstructionsNext").addEventListener("click", () => {
+    document.getElementById("csvInstructionsOverlay").style.display = "none";
+    document.getElementById("csvFileInput").click();
+  });
+
+  document.getElementById("csvFileInput").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target.result;
+      parseAndPreviewCSV(text);
+    };
+    reader.readAsText(file, "UTF-8");
+    // Reset so same file can be re-selected
+    e.target.value = "";
+  });
+
+  function parseAndPreviewCSV(text) {
+    const errEl  = document.getElementById("csvError");
+    const infoEl = document.getElementById("csvPreviewInfo");
+    errEl.style.display = "none";
+    csvParsedBooks = [];
+
+    // Split into lines, handle 
+
+
+    const lines = text.split(text.indexOf("\r") !== -1 ? "\r\n" : "\n").filter(l => l.trim() !== "");
+    if (lines.length < 2) {
+      errEl.textContent = "⚠️ CSV je prazen ali ima samo glavo.";
+      errEl.style.display = "block";
+      document.getElementById("csvOverlay").style.display = "flex";
+      return;
+    }
+
+    // Parse header — find which column index maps to which field
+    const header = splitCSVLine(lines[0]).map(h => h.trim().toLowerCase());
+    const colMap = {
+      naslov:  findCol(header, ["naslov", "title", "naziv"]),
+      avtor:   findCol(header, ["avtor", "author", "pisatelj"]),
+      letnica: findCol(header, ["letnica", "leto", "year"]),
+      razred:  findCol(header, ["razred", "class", "grade"]),
+    };
+
+    if (colMap.naslov === -1) {
+      errEl.textContent = "❌ Stolpec 'Naslov' ni bil najden v CSV. Preveri ime stolpca.";
+      errEl.style.display = "block";
+      document.getElementById("csvOverlay").style.display = "flex";
+      return;
+    }
+
+    // Parse data rows
+    for (let i = 1; i < lines.length; i++) {
+      const cols = splitCSVLine(lines[i]);
+      const naslov = colMap.naslov !== -1 ? (cols[colMap.naslov] || "").trim() : "";
+      if (!naslov) continue; // skip empty rows
+      csvParsedBooks.push({
+        Naslov:     naslov,
+        Avtor:      colMap.avtor   !== -1 ? (cols[colMap.avtor]   || "").trim() : "",
+        Letnica:    colMap.letnica !== -1 ? (cols[colMap.letnica] || "").trim() : "",
+        Razred:     colMap.razred  !== -1 ? (cols[colMap.razred]  || "").trim() : "",
+        izposojeno: false,
+        izposoja:   ""
+      });
+    }
+
+    if (csvParsedBooks.length === 0) {
+      errEl.textContent = "⚠️ Ni veljavnih vrstic za uvoz.";
+      errEl.style.display = "block";
+      document.getElementById("csvOverlay").style.display = "flex";
+      return;
+    }
+
+    // Build preview table
+    infoEl.textContent = `Najdenih ${csvParsedBooks.length} knjig za uvoz — preveri preview:`;
+    const tableDiv = document.getElementById("csvPreviewTable");
+    const preview  = csvParsedBooks.slice(0, 20); // show first 20
+    tableDiv.innerHTML = `
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="background:#f0ebe0;position:sticky;top:0;">
+            <th style="padding:0.4rem 0.6rem;text-align:left;border-bottom:1px solid var(--border);">Naslov</th>
+            <th style="padding:0.4rem 0.6rem;text-align:left;border-bottom:1px solid var(--border);">Avtor</th>
+            <th style="padding:0.4rem 0.6rem;text-align:left;border-bottom:1px solid var(--border);">Letnica</th>
+            <th style="padding:0.4rem 0.6rem;text-align:left;border-bottom:1px solid var(--border);">Razred</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${preview.map(b => `
+            <tr style="border-bottom:1px solid var(--border);">
+              <td style="padding:0.35rem 0.6rem;">${b.Naslov}</td>
+              <td style="padding:0.35rem 0.6rem;">${b.Avtor}</td>
+              <td style="padding:0.35rem 0.6rem;">${b.Letnica}</td>
+              <td style="padding:0.35rem 0.6rem;">${b.Razred}</td>
+            </tr>`).join("")}
+          ${csvParsedBooks.length > 20 ? `<tr><td colspan="4" style="padding:0.5rem 0.6rem;color:var(--muted);font-style:italic;">... in še ${csvParsedBooks.length - 20} knjig</td></tr>` : ""}
+        </tbody>
+      </table>`;
+
+    document.getElementById("csvProgress").style.display = "none";
+    document.getElementById("csvConfirm").disabled = false;
+    document.getElementById("csvConfirm").textContent = "✅ Uvozi vse v Firebase";
+    document.getElementById("csvOverlay").style.display = "flex";
+  }
+
+  function findCol(header, candidates) {
+    for (const c of candidates) {
+      const idx = header.findIndex(h => h.includes(c));
+      if (idx !== -1) return idx;
+    }
+    return -1;
+  }
+
+  function splitCSVLine(line) {
+    // Handles quoted fields with commas inside
+    const result = [];
+    let cur = "", inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQuotes && line[i+1] === '"') { cur += '"'; i++; }
+        else inQuotes = !inQuotes;
+      } else if ((ch === ',' || ch === ';') && !inQuotes) {
+        result.push(cur); cur = "";
+      } else {
+        cur += ch;
+      }
+    }
+    result.push(cur);
+    return result;
+  }
+
+  document.getElementById("csvCancel").addEventListener("click", () => {
+    document.getElementById("csvOverlay").style.display = "none";
+    csvParsedBooks = [];
+  });
+
+  document.getElementById("csvConfirm").addEventListener("click", async () => {
+    if (csvParsedBooks.length === 0) return;
+    const confirmBtn = document.getElementById("csvConfirm");
+    const progressEl = document.getElementById("csvProgress");
+    const errEl      = document.getElementById("csvError");
+    confirmBtn.disabled = true;
+    progressEl.style.display = "block";
+    errEl.style.display = "none";
+
+    let done = 0, failed = 0;
+    // Upload in batches to avoid overwhelming Firebase
+    const BATCH = 20;
+    for (let i = 0; i < csvParsedBooks.length; i += BATCH) {
+      const chunk = csvParsedBooks.slice(i, i + BATCH);
+      await Promise.all(chunk.map(book =>
+        addDoc(collection(db, "Knjige"), book).catch(() => failed++)
+      ));
+      done = Math.min(i + BATCH, csvParsedBooks.length);
+      progressEl.textContent = `Uvažam... ${done} / ${csvParsedBooks.length}`;
+    }
+
+    if (failed === 0) {
+      progressEl.textContent = `✅ Uspešno uvoženih ${done} knjig!`;
+    } else {
+      progressEl.textContent = `⚠️ Uvoženih ${done - failed} knjig, ${failed} napak.`;
+    }
+    confirmBtn.textContent = "✅ Uvoz končan";
+    csvParsedBooks = [];
+    // Refresh admin list after short delay so user can see success message
+    setTimeout(() => {
+      document.getElementById("csvOverlay").style.display = "none";
+      loadAdminBooks();
+    }, 2000);
+  });
+
+  // ─── Delete book (admin only) ─────────────────────────────────────────────
+  let pendingDeleteId    = null;
+  let pendingDeleteTitle = "";
+
+  let pendingEditId = null;
+
+  document.getElementById("adminBookList").addEventListener("click", e => {
+    // Edit button
+    const editBtn = e.target.closest("button[data-edit-id]");
+    if (editBtn) {
+      pendingEditId = editBtn.dataset.editId;
+      document.getElementById("editBookSubtitle").textContent = `ID: ${pendingEditId}`;
+      document.getElementById("editNaslov").value  = editBtn.dataset.editNaslov  || "";
+      document.getElementById("editAvtor").value   = editBtn.dataset.editAvtor   || "";
+      document.getElementById("editLetnica").value = editBtn.dataset.editLetnica || "";
+      document.getElementById("editRazred").value  = editBtn.dataset.editRazred  || "";
+      document.getElementById("editBookError").style.display = "none";
+      document.getElementById("editBookOverlay").style.display = "flex";
+      setTimeout(() => document.getElementById("editNaslov").focus(), 50);
+      return;
+    }
+    // Delete button
+    const delBtn = e.target.closest("button[data-del-id]");
+    if (!delBtn) return;
+    pendingDeleteId    = delBtn.dataset.delId;
+    pendingDeleteTitle = delBtn.dataset.delNaslov || "knjiga";
+    document.getElementById("deleteBookTitle").textContent = `Knjiga: "${pendingDeleteTitle}"`;
+    document.getElementById("deleteError").style.display = "none";
+    document.getElementById("deleteOverlay").style.display = "flex";
+  });
+
+  // Edit modal listeners
+  document.getElementById("editBookCancel").addEventListener("click", () => {
+    document.getElementById("editBookOverlay").style.display = "none";
+  });
+
+  document.getElementById("editBookConfirm").addEventListener("click", async () => {
+    const naslov  = document.getElementById("editNaslov").value.trim();
+    const avtor   = document.getElementById("editAvtor").value.trim();
+    const letnica = document.getElementById("editLetnica").value.trim();
+    const razred  = document.getElementById("editRazred").value.trim();
+    const errEl   = document.getElementById("editBookError");
+
+    if (!naslov || !avtor) {
+      errEl.textContent = "⚠️ Naslov in avtor sta obvezna.";
+      errEl.style.display = "block";
+      return;
+    }
+
+    const btn = document.getElementById("editBookConfirm");
+    btn.textContent = "Shranjujem..."; btn.disabled = true;
+
+    try {
+      await updateDoc(doc(db, "Knjige", pendingEditId), {
+        Naslov:  naslov,
+        Avtor:   avtor,
+        Letnica: letnica,
+        Razred:  razred
+      });
+      document.getElementById("editBookOverlay").style.display = "none";
+      const q = document.getElementById("adminSearch").value.trim();
+      q ? searchAdminBooks() : loadAdminBooks();
+    } catch (err) {
+      console.error(err);
+      errEl.textContent = "❌ Napaka: " + (err.message || err.code);
+      errEl.style.display = "block";
+    }
+    btn.textContent = "💾 Shrani spremembe"; btn.disabled = false;
+  });
+
+  document.getElementById("deleteCancel").addEventListener("click", () => {
+    document.getElementById("deleteOverlay").style.display = "none";
+  });
+
+  document.getElementById("deleteConfirm").addEventListener("click", async () => {
+    const btn   = document.getElementById("deleteConfirm");
+    const errEl = document.getElementById("deleteError");
+    btn.textContent = "Brišem..."; btn.disabled = true;
+    try {
+      await deleteDoc(doc(db, "Knjige", pendingDeleteId));
+      document.getElementById("deleteOverlay").style.display = "none";
+      const q = document.getElementById("adminSearch").value.trim();
+      q ? searchAdminBooks() : loadAdminBooks();
+    } catch (err) {
+      console.error(err);
+      errEl.textContent = "❌ Napaka pri brisanju: " + (err.message || err.code);
+      errEl.style.display = "block";
+    }
+    btn.textContent = "🗑 Da, izbriši"; btn.disabled = false;
+  });
+
+  // ─── Public search / load ──────────────────────────────────────────────────
+  document.getElementById("btnSearch").addEventListener("click", searchBooks);
+  document.getElementById("btnAll").addEventListener("click", () => { activeRazred = null; activeStatus = "all"; document.getElementById("search").value = ""; renderAndFilter(); });
+  document.getElementById("search").addEventListener("keydown", e => {
+    if (e.key === "Enter") searchBooks();
+  });
+
+  // ─── Close modals on backdrop click ───────────────────────────────────────
+  ["adminOverlay","addBookOverlay","borrowOverlay","returnOverlay","adminLoginOverlay","deleteOverlay","csvOverlay","csvInstructionsOverlay","manageAdminsOverlay","addAdminOverlay","editBookOverlay"].forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener("click", e => { if (e.target === el) el.style.display = "none"; });
+  });
+
+  // ═══════════════════════════════════════════════════════
+  //  ADMIN MANAGEMENT
+  // ═══════════════════════════════════════════════════════
+
+  async function loadAdminProfiles() {
+    const container = document.getElementById("adminListContainer");
+    const status    = document.getElementById("adminListStatus");
+    container.innerHTML = "";
+    status.textContent  = "Nalagam...";
+
+    try {
+      const adminDoc = await getDoc(doc(db, "Admin", "Admin_list"));
+      if (!adminDoc.exists()) {
+        status.textContent = "❌ Admin dokument ne obstaja.";
+        return;
+      }
+      const data = adminDoc.data();
+
+      // Find all adminN keys and pair with passwordN
+      const admins = [];
+      Object.keys(data).forEach(key => {
+        if (key.startsWith("admin") && !key.startsWith("adminLogin")) {
+          const num = key.replace("admin", "");
+          if (!isNaN(num)) {
+            admins.push({ num, name: data[key], hasPassword: !!data["password" + num] });
+          }
+        }
+      });
+      admins.sort((a, b) => parseInt(a.num) - parseInt(b.num));
+
+      if (admins.length === 0) {
+        status.textContent = "Ni adminov.";
+        return;
+      }
+      status.textContent = "";
+
+      admins.forEach(admin => {
+        const card = document.createElement("div");
+        card.className = "admin-profile-card";
+        card.innerHTML = `
+          <div>
+            <div class="admin-profile-name">👤 ${admin.name}</div>
+            <div class="admin-profile-slot">Slot: admin${admin.num} &nbsp;|&nbsp; Geslo: ${admin.hasPassword ? "✅ nastavljeno" : "⚠️ ni gesla"}</div>
+          </div>
+          <button class="btn-delete-admin" data-admin-num="${admin.num}" data-admin-name="${admin.name}">🗑 Odstrani</button>
+        `;
+        container.appendChild(card);
+      });
+
+    } catch (err) {
+      status.textContent = "❌ Napaka: " + (err.message || err.code);
+    }
+  }
+
+  // Open manage admins modal
+  document.getElementById("btnManageAdmins").addEventListener("click", () => {
+    document.getElementById("manageAdminsOverlay").style.display = "flex";
+    loadAdminProfiles();
+  });
+
+  document.getElementById("manageAdminsClose").addEventListener("click", () => {
+    document.getElementById("manageAdminsOverlay").style.display = "none";
+  });
+
+  // Delete admin — delegated click
+  document.getElementById("adminListContainer").addEventListener("click", async e => {
+    const btn = e.target.closest("button[data-admin-num]");
+    if (!btn) return;
+    const num  = btn.dataset.adminNum;
+    const name = btn.dataset.adminName;
+    if (!confirm(`Res želiš odstraniti admina "${name}"?`)) return;
+    try {
+      // Remove both adminN and passwordN fields using updateDoc with deleteField
+      const { deleteField } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+      await updateDoc(doc(db, "Admin", "Admin_list"), {
+        ["admin" + num]:    deleteField(),
+        ["password" + num]: deleteField()
+      });
+      loadAdminProfiles(); // refresh list
+    } catch (err) {
+      alert("❌ Napaka pri odstranjevanju: " + (err.message || err.code));
+    }
+  });
+
+  // Open add admin modal
+  document.getElementById("btnShowAddAdmin").addEventListener("click", () => {
+    document.getElementById("manageAdminsOverlay").style.display = "none";
+    document.getElementById("newAdminName").value = "";
+    document.getElementById("newAdminPassword").value = "";
+    document.getElementById("addAdminError").style.display = "none";
+    document.getElementById("addAdminOverlay").style.display = "flex";
+    setTimeout(() => document.getElementById("newAdminName").focus(), 50);
+  });
+
+  document.getElementById("addAdminCancel").addEventListener("click", () => {
+    document.getElementById("addAdminOverlay").style.display = "none";
+    document.getElementById("manageAdminsOverlay").style.display = "flex";
+    loadAdminProfiles();
+  });
+
+  document.getElementById("addAdminConfirm").addEventListener("click", async () => {
+    const name     = document.getElementById("newAdminName").value.trim();
+    const password = document.getElementById("newAdminPassword").value.trim();
+    const errEl    = document.getElementById("addAdminError");
+
+    if (!name || !password) {
+      errEl.textContent = "⚠️ Ime in geslo sta obvezna.";
+      errEl.style.display = "block";
+      return;
+    }
+
+    const btn = document.getElementById("addAdminConfirm");
+    btn.textContent = "Dodajam..."; btn.disabled = true;
+
+    try {
+      // Read current doc to find next available slot number
+      const adminDoc = await getDoc(doc(db, "Admin", "Admin_list"));
+      const data = adminDoc.exists() ? adminDoc.data() : {};
+
+      // Find first unused slot number
+      let num = 1;
+      while (data["admin" + num] !== undefined) num++;
+
+      await updateDoc(doc(db, "Admin", "Admin_list"), {
+        ["admin" + num]:    name,
+        ["password" + num]: password
+      });
+
+      document.getElementById("addAdminOverlay").style.display = "none";
+      document.getElementById("manageAdminsOverlay").style.display = "flex";
+      loadAdminProfiles();
+
+    } catch (err) {
+      errEl.textContent = "❌ Napaka: " + (err.message || err.code);
+      errEl.style.display = "block";
+    }
+    btn.textContent = "✅ Dodaj admina"; btn.disabled = false;
+  });
+
+  // ─── Boot ─────────────────────────────────────────────────────────────────
+  loadBooks();
+</script>
+
+</body>
+</html>
