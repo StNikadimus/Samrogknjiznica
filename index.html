@@ -694,6 +694,7 @@
     }
     .btn-reject:hover { background: #c0392b; color: white; }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
 
@@ -782,6 +783,8 @@
   <div class="admin-tabs">
     <button class="admin-tab active" id="tabKnjige">📚 Knjige</button>
     <button class="admin-tab" id="tabPredlogi">✏️ Predlogi <span class="tab-badge" id="predlogiBadge" style="display:none">0</span></button>
+    <button class="admin-tab" id="tabLog">🕓 Log</button>
+    <button class="admin-tab" id="tabSettings">⚙️ Nastavitve</button>
   </div>
 
   <!-- Tab: Knjige -->
@@ -808,6 +811,105 @@
     <div class="admin-main">
       <div id="predlogiStatusMsg" style="text-align:center;padding:2rem;color:#8892a4;">Nalagam predloge...</div>
       <div id="predlogiList" class="admin-book-grid"></div>
+    </div>
+  </div>
+
+  <!-- Tab: Log -->
+  <div id="tabSettingsContent" style="display:none">
+    <div class="admin-main" style="max-width:700px;">
+
+      <!-- Section: Splošno -->
+      <div style="background:var(--admin-card);border:1px solid var(--admin-border);border-radius:14px;padding:1.4rem;margin-bottom:1.2rem;">
+        <h3 style="color:#e0e6f0;font-family:'Playfair Display',serif;margin-bottom:1rem;font-size:1.1rem;">📅 Rok za vrnitev</h3>
+        <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+          <label style="color:#8892a4;font-size:0.9rem;">Knjigo je treba vrniti v:</label>
+          <input type="number" id="settingsDays" min="1" max="365" value="14"
+            style="width:80px;background:#2a2f40;color:#e0e6f0;border:1px solid var(--admin-border);border-radius:8px;padding:0.4rem 0.7rem;font-size:1rem;font-family:'DM Sans',sans-serif;text-align:center;">
+          <span style="color:#8892a4;font-size:0.9rem;">dneh</span>
+        </div>
+      </div>
+
+      <!-- Section: Email opomniki -->
+      <div style="background:var(--admin-card);border:1px solid var(--admin-border);border-radius:14px;padding:1.4rem;margin-bottom:1.2rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
+          <h3 style="color:#e0e6f0;font-family:'Playfair Display',serif;font-size:1.1rem;">📧 Email opomniki</h3>
+          <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;">
+            <div style="position:relative;width:44px;height:24px;">
+              <input type="checkbox" id="settingsEmailEnabled" style="opacity:0;width:0;height:0;position:absolute;">
+              <div id="toggleTrack" style="position:absolute;inset:0;background:#2a2f40;border-radius:12px;border:1px solid var(--admin-border);transition:background 0.2s;"></div>
+              <div id="toggleThumb" style="position:absolute;top:3px;left:3px;width:16px;height:16px;background:#8892a4;border-radius:50%;transition:all 0.2s;"></div>
+            </div>
+            <span id="toggleLabel" style="color:#8892a4;font-size:0.88rem;">Izklopljeno</span>
+          </label>
+        </div>
+
+        <div id="emailSettingsFields" style="opacity:0.4;pointer-events:none;transition:opacity 0.2s;">
+          <!-- EmailJS config -->
+          <div style="background:#1a1f2e;border-radius:10px;padding:1rem;margin-bottom:1rem;">
+            <div style="color:#5b8dee;font-size:0.8rem;font-weight:700;margin-bottom:0.7rem;letter-spacing:0.05em;">EMAILJS KONFIGURACIJA</div>
+            <input type="text" id="settingsPublicKey"  class="modal-input" placeholder="Public Key (npr. user_abc123)" style="margin-bottom:0.5rem;">
+            <input type="text" id="settingsServiceId"  class="modal-input" placeholder="Service ID (npr. service_xyz)" style="margin-bottom:0.5rem;">
+            <input type="text" id="settingsTemplateId" class="modal-input" placeholder="Template ID (npr. template_abc)">
+          </div>
+
+          <!-- Reminder timing -->
+          <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;">
+            <label style="color:#8892a4;font-size:0.9rem;">Pošlji opomnik</label>
+            <input type="number" id="settingsReminderDays" min="1" max="30" value="2"
+              style="width:70px;background:#2a2f40;color:#e0e6f0;border:1px solid var(--admin-border);border-radius:8px;padding:0.4rem 0.7rem;font-size:1rem;font-family:'DM Sans',sans-serif;text-align:center;">
+            <label style="color:#8892a4;font-size:0.9rem;">dni pred rokom</label>
+          </div>
+
+          <!-- Email template editor -->
+          <div style="margin-bottom:1rem;">
+            <div style="color:#8892a4;font-size:0.82rem;margin-bottom:0.4rem;">Predmet maila:</div>
+            <input type="text" id="settingsEmailSubject" class="modal-input"
+              value="Opomnik: vrnitev knjige {{book_title}}">
+            <div style="color:#8892a4;font-size:0.82rem;margin:0.6rem 0 0.4rem;">Besedilo maila:</div>
+            <textarea id="settingsEmailBody" rows="6"
+              style="width:100%;background:#2a2f40;color:#e0e6f0;border:1px solid var(--admin-border);border-radius:8px;padding:0.6rem 0.8rem;font-family:'DM Sans',sans-serif;font-size:0.85rem;resize:vertical;box-sizing:border-box;line-height:1.6;">Pozdravljeni {{to_name}},
+
+opominjamo vas, da morate knjigo "{{book_title}}" vrniti do {{due_date}}.
+
+Na voljo vam je še {{days_left}} dni.
+
+Lepo vas pozdravljamo,
+Knjižnica Samorog 🦄</textarea>
+            <div style="font-size:0.75rem;color:#5b8dee;margin-top:0.4rem;">
+              Spremenljivke: <code>{{to_name}}</code> <code>{{book_title}}</code> <code>{{due_date}}</code> <code>{{days_left}}</code> <code>{{to_email}}</code>
+            </div>
+          </div>
+
+          <!-- Test email -->
+          <div style="background:#1a1f2e;border-radius:10px;padding:1rem;">
+            <div style="color:#5b8dee;font-size:0.8rem;font-weight:700;margin-bottom:0.7rem;letter-spacing:0.05em;">TEST EMAIL</div>
+            <div style="display:flex;gap:0.7rem;align-items:center;flex-wrap:wrap;">
+              <input type="email" id="settingsTestEmail" class="modal-input" placeholder="test@example.com" style="flex:1;min-width:200px;">
+              <button id="btnTestEmail" style="background:#5b8dee;color:white;border:none;border-radius:8px;padding:0.55rem 1.1rem;font-family:'DM Sans',sans-serif;font-size:0.88rem;font-weight:600;cursor:pointer;white-space:nowrap;">📨 Pošlji test</button>
+            </div>
+            <div id="testEmailStatus" style="font-size:0.82rem;margin-top:0.5rem;display:none;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Save button -->
+      <div style="display:flex;justify-content:flex-end;gap:0.8rem;">
+        <button id="btnSaveSettings" style="background:var(--admin-accent);color:white;border:none;border-radius:10px;padding:0.65rem 1.5rem;font-family:'DM Sans',sans-serif;font-size:0.95rem;font-weight:600;cursor:pointer;">💾 Shrani nastavitve</button>
+      </div>
+      <div id="settingsSaveStatus" style="text-align:right;font-size:0.82rem;margin-top:0.5rem;display:none;"></div>
+    </div>
+  </div>
+
+  <div id="tabLogContent" style="display:none">
+    <div class="admin-main">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
+        <div style="font-size:0.85rem;color:#8892a4;" id="logInfo">Nalagam...</div>
+        <select id="logAdminFilter" style="background:#2a2f40;color:#e0e6f0;border:1px solid var(--admin-border);border-radius:8px;padding:0.4rem 0.8rem;font-family:'DM Sans',sans-serif;font-size:0.85rem;cursor:pointer;">
+          <option value="">Vsi admini</option>
+        </select>
+      </div>
+      <div id="logStatusMsg" style="text-align:center;padding:2rem;color:#8892a4;"></div>
+      <div id="logList" style="display:flex;flex-direction:column;gap:0.5rem;"></div>
     </div>
   </div>
 </div>
@@ -853,6 +955,10 @@
     <h2 class="modal-title">📖 Izposoja knjige</h2>
     <p class="modal-sub" id="borrowBookTitle"></p>
     <input type="text" id="borrowNameInput" class="modal-input" placeholder="Tvoje ime in priimek...">
+    <div id="borrowEmailField" style="display:none;">
+      <input type="email" id="borrowEmailInput" class="modal-input" placeholder="Tvoj email za opomnik (neobvezno)">
+      <div style="font-size:0.78rem;color:var(--muted);margin-top:-0.3rem;margin-bottom:0.3rem;">📧 Poslali ti bomo opomnik pred rokom vrnitve</div>
+    </div>
     <div id="borrowError" class="modal-error" style="display:none"></div>
     <div class="modal-actions">
       <button class="btn btn-secondary" id="borrowCancel">Prekliči</button>
@@ -1332,6 +1438,7 @@
           <div>🏫 Razred: ${book.Razred || '—'}</div>
           ${book.Zvrst  ? `<div>🎭 ${book.Zvrst}</div>`  : ''}
           ${book.Strani ? `<div>📄 ${book.Strani} strani</div>` : ''}
+          ${book.izposojeno && book.rokVrnitve ? `<div style='color:#c0392b;font-size:0.78rem;'>⏰ Rok: ${new Date(book.rokVrnitve).toLocaleDateString('sl-SI')}</div>` : ''}
         </div>
         <span class="status-badge ${book.izposojeno ? 'status-borrowed' : 'status-available'}">
           ${book.izposojeno ? '🔴 Izposojena' : '🟢 Na voljo'}
@@ -1440,13 +1547,19 @@
       errEl.style.display = "block";
       return;
     }
+    const emailInput = document.getElementById("borrowEmailInput").value.trim();
     const btn = document.getElementById("borrowConfirm");
     btn.textContent = "Shranjujem..."; btn.disabled = true;
     try {
       const bookData = allBooksCache.find(b => b.id === pendingBorrowId) || {};
+      const dueDate  = new Date();
+      dueDate.setDate(dueDate.getDate() + (appSettings.loanDays || 14));
+      const dueDateISO = dueDate.toISOString();
+
       await updateDoc(doc(db, "Knjige", pendingBorrowId), {
         izposojeno: true,
-        izposoja:   name
+        izposoja:   name,
+        rokVrnitve: dueDateISO
       });
       // Log to history
       await addDoc(collection(db, "Izposoje"), {
@@ -1454,12 +1567,16 @@
         naslov:    bookData.Naslov || "",
         razred:    bookData.Razred || "",
         ime:       name,
-        datum:     new Date().toISOString()
+        datum:     new Date().toISOString(),
+        rokVrnitve: dueDateISO
       });
+      // Save email if provided and email enabled
+      if (appSettings.emailEnabled && emailInput) {
+        await saveUserEmail(name, emailInput);
+      }
       document.getElementById("borrowOverlay").style.display = "none";
-      // Update local cache entry so we don't need a full Firebase reload
       const idx = allBooksCache.findIndex(b => b.id === pendingBorrowId);
-      if (idx !== -1) { allBooksCache[idx].izposojeno = true; allBooksCache[idx].izposoja = name; }
+      if (idx !== -1) { allBooksCache[idx].izposojeno = true; allBooksCache[idx].izposoja = name; allBooksCache[idx].rokVrnitve = dueDateISO; }
       buildRazredChips(allBooksCache);
       renderAndFilter();
     } catch (err) {
@@ -1541,6 +1658,7 @@
           <div>📅 ${book.Letnica || '—'} &nbsp;|&nbsp; 🏫 ${book.Razred || '—'}</div>
           ${book.Zvrst  ? `<div>🎭 ${book.Zvrst}</div>`  : ''}
           ${book.Strani ? `<div>📄 ${book.Strani} strani</div>` : ''}
+          ${book.izposojeno && book.rokVrnitve ? `<div style='color:#e07070;font-size:0.8rem;'>⏰ Rok: ${new Date(book.rokVrnitve).toLocaleDateString('sl-SI')}</div>` : ''}
         </div>
         ${borrowerHtml}
         <div class="admin-card-actions">
@@ -1616,7 +1734,10 @@
     }
   }
 
+  let currentAdminName = "";
+
   function showAdminView(adminName) {
+    currentAdminName = adminName;
     document.getElementById("adminWelcome").textContent = `Pozdravljen, ${adminName}! 👋`;
     document.getElementById("publicView").style.display = "none";
     document.getElementById("adminView").style.display  = "block";
@@ -1624,6 +1745,18 @@
     switchTab("knjige");
     loadAdminBooks();
     updatePredlogiBadge();
+    logAction("prijava", `Admin se je prijavil`);
+  }
+
+  async function logAction(tip, opis) {
+    try {
+      await addDoc(collection(db, "AdminLog"), {
+        admin: currentAdminName,
+        tip,
+        opis,
+        datum: new Date().toISOString()
+      });
+    } catch (e) { console.warn("Log napaka:", e); }
   }
 
   function showPublicView() {
@@ -1761,6 +1894,7 @@
         izposojeno: false,
         izposoja:   ""
       });
+      logAction("dodaj_knjigo", `Dodal knjigo: "${naslov}" (${avtor})`);
       document.getElementById("addBookOverlay").style.display = "none";
       loadBooks();
     } catch (err) {
@@ -1949,8 +2083,10 @@
 
     if (failed === 0) {
       progressEl.textContent = `✅ Uspešno uvoženih ${done} knjig!`;
+      logAction("uvoz_csv", `Uvozil ${done} knjig iz CSV`);
     } else {
       progressEl.textContent = `⚠️ Uvoženih ${done - failed} knjig, ${failed} napak.`;
+      logAction("uvoz_csv", `Uvozil ${done - failed} knjig iz CSV (${failed} napak)`);
     }
     confirmBtn.textContent = "✅ Uvoz končan";
     csvParsedBooks = [];
@@ -2026,6 +2162,7 @@
         Zvrst:   zvrst,
         Strani:  strani || 0
       });
+      logAction("uredi_knjigo", `Uredil knjigo: "${naslov}"`);
       document.getElementById("editBookOverlay").style.display = "none";
       const q = document.getElementById("adminSearch").value.trim();
       q ? searchAdminBooks() : loadAdminBooks();
@@ -2046,6 +2183,7 @@
     const errEl = document.getElementById("deleteError");
     btn.textContent = "Brišem..."; btn.disabled = true;
     try {
+      logAction("izbrisi_knjigo", `Izbrisal knjigo: "${pendingDeleteTitle}"`);
       await deleteDoc(doc(db, "Knjige", pendingDeleteId));
       document.getElementById("deleteOverlay").style.display = "none";
       const q = document.getElementById("adminSearch").value.trim();
@@ -2149,6 +2287,7 @@
         ["admin" + num]:    deleteField(),
         ["password" + num]: deleteField()
       });
+      logAction("odstrani_admina", `Odstranil admina: "${name}"`);
       loadAdminProfiles(); // refresh list
     } catch (err) {
       alert("❌ Napaka pri odstranjevanju: " + (err.message || err.code));
@@ -2198,7 +2337,7 @@
         ["admin" + num]:    name,
         ["password" + num]: password
       });
-
+      logAction("dodaj_admina", `Dodal novega admina: "${name}"`);
       document.getElementById("addAdminOverlay").style.display = "none";
       document.getElementById("manageAdminsOverlay").style.display = "flex";
       loadAdminProfiles();
@@ -2346,16 +2485,19 @@
   //  ADMIN TABS
   // ═══════════════════════════════════════════════════════
   function switchTab(tab) {
-    const isKnjige = tab === "knjige";
-    document.getElementById("tabKnjigeContent").style.display  = isKnjige ? "block" : "none";
-    document.getElementById("tabPredlogiContent").style.display = isKnjige ? "none"  : "block";
-    document.getElementById("tabKnjige").classList.toggle("active",   isKnjige);
-    document.getElementById("tabPredlogi").classList.toggle("active", !isKnjige);
-    if (!isKnjige) loadPredlogi();
+    ["knjige","predlogi","log","settings"].forEach(t => {
+      document.getElementById("tab" + t.charAt(0).toUpperCase() + t.slice(1) + "Content").style.display = tab === t ? "block" : "none";
+      document.getElementById("tab"   + t.charAt(0).toUpperCase() + t.slice(1)).classList.toggle("active", tab === t);
+    });
+    if (tab === "predlogi") loadPredlogi();
+    if (tab === "log")      loadLog();
+    if (tab === "settings") loadSettings();
   }
 
   document.getElementById("tabKnjige").addEventListener("click",   () => switchTab("knjige"));
   document.getElementById("tabPredlogi").addEventListener("click", () => switchTab("predlogi"));
+  document.getElementById("tabLog").addEventListener("click",      () => switchTab("log"));
+  document.getElementById("tabSettings").addEventListener("click", () => switchTab("settings"));
 
   // ═══════════════════════════════════════════════════════
   //  SUGGEST CHANGE (public FAB)
@@ -2561,6 +2703,7 @@
       try {
         await updateDoc(doc(db, "Knjige", knjigaId), update);
         await updateDoc(doc(db, "Predlogi", predlogId), { status: "approved" });
+        logAction("potrdi_predlog", `Potrdil predlog za: "${predlogSnap.data().naslov}" (od: ${predlogSnap.data().ime})`);
         // Update local cache too
         const idx = allBooksCache.findIndex(b => b.id === knjigaId);
         if (idx !== -1) Object.assign(allBooksCache[idx], update);
@@ -2575,7 +2718,9 @@
       const predlogId = rejectBtn.dataset.predlogId;
       rejectBtn.textContent = "..."; rejectBtn.disabled = true;
       try {
+        const rSnap = await getDoc(doc(db, "Predlogi", predlogId));
         await updateDoc(doc(db, "Predlogi", predlogId), { status: "rejected" });
+        logAction("zavrni_predlog", `Zavrnil predlog za: "${rSnap.exists() ? rSnap.data().naslov : "?"}" (od: ${rSnap.exists() ? rSnap.data().ime : "?"})`);
         loadPredlogi();
       } catch (err) {
         alert("❌ Napaka: " + (err.message || err.code));
@@ -2596,8 +2741,281 @@
     } catch (_) {}
   }
 
+  // ═══════════════════════════════════════════════════════
+  //  ADMIN LOG
+  // ═══════════════════════════════════════════════════════
+
+  const LOG_ICONS = {
+    prijava:         { icon: "🔑", label: "Prijava" },
+    dodaj_knjigo:    { icon: "➕", label: "Dodaj knjigo" },
+    uredi_knjigo:    { icon: "✏️", label: "Uredi knjigo" },
+    izbrisi_knjigo:  { icon: "🗑", label: "Izbriši knjigo" },
+    uvoz_csv:        { icon: "📂", label: "Uvoz CSV" },
+    potrdi_predlog:  { icon: "✅", label: "Potrdi predlog" },
+    zavrni_predlog:  { icon: "❌", label: "Zavrni predlog" },
+    dodaj_admina:    { icon: "👤", label: "Dodaj admina" },
+    odstrani_admina: { icon: "🗑", label: "Odstrani admina" },
+  };
+
+  async function loadLog() {
+    const statusEl = document.getElementById("logStatusMsg");
+    const listEl   = document.getElementById("logList");
+    const infoEl   = document.getElementById("logInfo");
+    statusEl.textContent = "Nalagam...";
+    listEl.innerHTML = "";
+
+    try {
+      const snap = await getDocs(collection(db, "AdminLog"));
+      let entries = [];
+      snap.forEach(d => entries.push({ id: d.id, ...d.data() }));
+      entries.sort((a, b) => (b.datum || "").localeCompare(a.datum || ""));
+
+      // Populate admin filter dropdown
+      const filterEl = document.getElementById("logAdminFilter");
+      const admins = [...new Set(entries.map(e => e.admin).filter(Boolean))].sort();
+      filterEl.innerHTML = '<option value="">Vsi admini</option>' +
+        admins.map(a => `<option value="${a}">${a}</option>`).join("");
+
+      infoEl.textContent = `${entries.length} vnosov skupaj`;
+      statusEl.textContent = "";
+
+      const renderLog = (filter) => {
+        const filtered = filter ? entries.filter(e => e.admin === filter) : entries;
+        listEl.innerHTML = "";
+        if (filtered.length === 0) {
+          listEl.innerHTML = '<div style="text-align:center;padding:2rem;color:#8892a4;">Ni vnosov.</div>';
+          return;
+        }
+        filtered.forEach((entry, i) => {
+          const meta = LOG_ICONS[entry.tip] || { icon: "📋", label: entry.tip };
+          const date = entry.datum
+            ? new Date(entry.datum).toLocaleString("sl-SI", { day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" })
+            : "—";
+          const row = document.createElement("div");
+          row.style.cssText = `display:flex;align-items:flex-start;gap:0.9rem;background:var(--admin-card);border:1px solid var(--admin-border);border-radius:10px;padding:0.8rem 1rem;animation:fadeIn 0.2s ease both;animation-delay:${i*0.03}s;`;
+          row.innerHTML = `
+            <div style="font-size:1.3rem;line-height:1;margin-top:0.1rem;">${meta.icon}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:0.88rem;font-weight:600;color:#e0e6f0;">${entry.opis || meta.label}</div>
+              <div style="font-size:0.78rem;color:#8892a4;margin-top:0.2rem;display:flex;gap:0.8rem;flex-wrap:wrap;">
+                <span>👤 ${entry.admin || "—"}</span>
+                <span>📅 ${date}</span>
+              </div>
+            </div>
+            <div style="font-size:0.72rem;color:#5b8dee;background:#1a2035;padding:0.2rem 0.55rem;border-radius:6px;white-space:nowrap;align-self:center;">${meta.label}</div>
+          `;
+          listEl.appendChild(row);
+        });
+      };
+
+      renderLog("");
+      filterEl.addEventListener("change", () => renderLog(filterEl.value));
+
+    } catch (err) {
+      statusEl.textContent = "❌ Napaka: " + (err.message || err.code);
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  SETTINGS
+  // ═══════════════════════════════════════════════════════
+
+  let appSettings = {
+    emailEnabled:   false,
+    publicKey:      "",
+    serviceId:      "",
+    templateId:     "",
+    loanDays:       14,
+    reminderDays:   2,
+    emailSubject:   "Opomnik: vrnitev knjige {{book_title}}",
+    emailBody:      "Pozdravljeni {{to_name}},\n\nopominjamo vas, da morate knjigo \"{{book_title}}\" vrniti do {{due_date}}.\n\nNa voljo vam je še {{days_left}} dni.\n\nLepo vas pozdravljamo,\nKnjižnica Samorog 🦄"
+  };
+
+  async function loadSettings() {
+    try {
+      const snap = await getDoc(doc(db, "Settings", "main"));
+      if (snap.exists()) Object.assign(appSettings, snap.data());
+    } catch (_) {}
+    applySettingsToUI();
+  }
+
+  function applySettingsToUI() {
+    document.getElementById("settingsEmailEnabled").checked  = appSettings.emailEnabled;
+    document.getElementById("settingsPublicKey").value       = appSettings.publicKey    || "";
+    document.getElementById("settingsServiceId").value       = appSettings.serviceId    || "";
+    document.getElementById("settingsTemplateId").value      = appSettings.templateId   || "";
+    document.getElementById("settingsDays").value            = appSettings.loanDays     || 14;
+    document.getElementById("settingsReminderDays").value    = appSettings.reminderDays || 2;
+    document.getElementById("settingsEmailSubject").value    = appSettings.emailSubject || "";
+    document.getElementById("settingsEmailBody").value       = appSettings.emailBody    || "";
+    updateEmailToggleUI(appSettings.emailEnabled);
+  }
+
+  function updateEmailToggleUI(enabled) {
+    const track  = document.getElementById("toggleTrack");
+    const thumb  = document.getElementById("toggleThumb");
+    const label  = document.getElementById("toggleLabel");
+    const fields = document.getElementById("emailSettingsFields");
+    track.style.background = enabled ? "var(--admin-accent)" : "#2a2f40";
+    thumb.style.left       = enabled ? "25px" : "3px";
+    thumb.style.background = enabled ? "white" : "#8892a4";
+    label.textContent      = enabled ? "Vklopljeno" : "Izklopljeno";
+    label.style.color      = enabled ? "var(--admin-accent)" : "#8892a4";
+    fields.style.opacity         = enabled ? "1" : "0.4";
+    fields.style.pointerEvents   = enabled ? "auto" : "none";
+    // Show/hide email field in borrow modal
+    document.getElementById("borrowEmailField").style.display = enabled ? "block" : "none";
+  }
+
+  document.getElementById("settingsEmailEnabled").addEventListener("change", e => {
+    updateEmailToggleUI(e.target.checked);
+  });
+
+  // Also click on the toggle track to toggle
+  document.getElementById("toggleTrack").addEventListener("click", () => {
+    const cb = document.getElementById("settingsEmailEnabled");
+    cb.checked = !cb.checked;
+    updateEmailToggleUI(cb.checked);
+  });
+  document.getElementById("toggleThumb").addEventListener("click", () => {
+    const cb = document.getElementById("settingsEmailEnabled");
+    cb.checked = !cb.checked;
+    updateEmailToggleUI(cb.checked);
+  });
+
+  document.getElementById("btnSaveSettings").addEventListener("click", async () => {
+    const btn = document.getElementById("btnSaveSettings");
+    const statusEl = document.getElementById("settingsSaveStatus");
+    btn.textContent = "Shranjujem..."; btn.disabled = true;
+
+    const newSettings = {
+      emailEnabled:  document.getElementById("settingsEmailEnabled").checked,
+      publicKey:     document.getElementById("settingsPublicKey").value.trim(),
+      serviceId:     document.getElementById("settingsServiceId").value.trim(),
+      templateId:    document.getElementById("settingsTemplateId").value.trim(),
+      loanDays:      parseInt(document.getElementById("settingsDays").value) || 14,
+      reminderDays:  parseInt(document.getElementById("settingsReminderDays").value) || 2,
+      emailSubject:  document.getElementById("settingsEmailSubject").value,
+      emailBody:     document.getElementById("settingsEmailBody").value,
+    };
+
+    try {
+      const { setDoc } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+      await setDoc(doc(db, "Settings", "main"), newSettings);
+      Object.assign(appSettings, newSettings);
+      logAction("nastavitve", "Posodobil nastavitve");
+      statusEl.textContent = "✅ Nastavitve shranjene!";
+      statusEl.style.color = "#6fcf97";
+      statusEl.style.display = "block";
+      setTimeout(() => statusEl.style.display = "none", 3000);
+    } catch (err) {
+      statusEl.textContent = "❌ Napaka: " + (err.message || err.code);
+      statusEl.style.color = "#e07070";
+      statusEl.style.display = "block";
+    }
+    btn.textContent = "💾 Shrani nastavitve"; btn.disabled = false;
+  });
+
+  // Test email button
+  document.getElementById("btnTestEmail").addEventListener("click", async () => {
+    const email = document.getElementById("settingsTestEmail").value.trim();
+    const statusEl = document.getElementById("testEmailStatus");
+    if (!email) { statusEl.textContent = "⚠️ Vnesi email naslov."; statusEl.style.color = "#f59e0b"; statusEl.style.display = "block"; return; }
+    const pk = document.getElementById("settingsPublicKey").value.trim();
+    const si = document.getElementById("settingsServiceId").value.trim();
+    const ti = document.getElementById("settingsTemplateId").value.trim();
+    if (!pk || !si || !ti) { statusEl.textContent = "⚠️ Najprej vnesi EmailJS ključe."; statusEl.style.color = "#f59e0b"; statusEl.style.display = "block"; return; }
+
+    const btn = document.getElementById("btnTestEmail");
+    btn.textContent = "Pošiljam..."; btn.disabled = true;
+    statusEl.style.display = "none";
+
+    try {
+      emailjs.init(pk);
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + (parseInt(document.getElementById("settingsDays").value) || 14));
+      await emailjs.send(si, ti, {
+        to_email:   email,
+        to_name:    "Testni Uporabnik",
+        book_title: "Testna knjiga",
+        due_date:   dueDate.toLocaleDateString("sl-SI"),
+        days_left:  document.getElementById("settingsDays").value || "14",
+      });
+      statusEl.textContent = "✅ Test email poslan!";
+      statusEl.style.color = "#6fcf97";
+    } catch (err) {
+      statusEl.textContent = "❌ Napaka: " + (err.text || err.message || JSON.stringify(err));
+      statusEl.style.color = "#e07070";
+    }
+    statusEl.style.display = "block";
+    btn.textContent = "📨 Pošlji test"; btn.disabled = false;
+  });
+
+  // ═══════════════════════════════════════════════════════
+  //  USER EMAIL STORAGE + BORROW FLOW
+  // ═══════════════════════════════════════════════════════
+
+  async function getUserEmail(name) {
+    try {
+      const snap = await getDoc(doc(db, "Users", "Users_list"));
+      if (!snap.exists()) return null;
+      const data = snap.data();
+      // Find nameN that matches
+      for (const key of Object.keys(data)) {
+        if (key.startsWith("name") && data[key]?.toString().toLowerCase() === name.toLowerCase()) {
+          const num = key.replace("name", "");
+          return data["mail" + num] || null;
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  async function saveUserEmail(name, email) {
+    try {
+      const snap = await getDoc(doc(db, "Users", "Users_list"));
+      const data = snap.exists() ? snap.data() : {};
+      // Check if name already exists
+      for (const key of Object.keys(data)) {
+        if (key.startsWith("name") && data[key]?.toString().toLowerCase() === name.toLowerCase()) {
+          const num = key.replace("name", "");
+          const { setDoc: sd } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+          await updateDoc(doc(db, "Users", "Users_list"), { ["mail" + num]: email });
+          return;
+        }
+      }
+      // New user — find next slot
+      let num = 1;
+      while (data["name" + num] !== undefined) num++;
+      const update = { ["name" + num]: name, ["mail" + num]: email };
+      if (snap.exists()) {
+        await updateDoc(doc(db, "Users", "Users_list"), update);
+      } else {
+        const { setDoc: sd } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+        await sd(doc(db, "Users", "Users_list"), update);
+      }
+    } catch (e) { console.warn("saveUserEmail error:", e); }
+  }
+
+  async function sendReminderEmail(toEmail, toName, bookTitle, dueDate) {
+    if (!appSettings.emailEnabled || !appSettings.publicKey || !appSettings.serviceId || !appSettings.templateId) return;
+    const daysLeft = Math.ceil((new Date(dueDate) - new Date()) / 86400000);
+    try {
+      emailjs.init(appSettings.publicKey);
+      await emailjs.send(appSettings.serviceId, appSettings.templateId, {
+        to_email:   toEmail,
+        to_name:    toName,
+        book_title: bookTitle,
+        due_date:   new Date(dueDate).toLocaleDateString("sl-SI"),
+        days_left:  daysLeft,
+      });
+    } catch (e) { console.warn("Email send error:", e); }
+  }
+
   // ─── Boot ─────────────────────────────────────────────────────────────────
   loadBooks();
+  // Load settings on boot (affects borrow modal email field visibility)
+  loadSettings();
 </script>
 
 </body>
